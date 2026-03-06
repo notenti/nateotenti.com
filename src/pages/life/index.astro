@@ -10,6 +10,8 @@ const posts = (await getCollection('life')).sort(
 
 const latestPost = posts[0];
 const { Content } = latestPost ? await latestPost.render() : { Content: null };
+const previousPost = null;
+const nextPost = posts.length > 1 ? posts[1] : null;
 
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
@@ -130,10 +132,26 @@ const formatDateLong = (date: Date) => {
                 {Content && <Content />}
               </div>
 
-              <div class="mt-16 pt-8 border-t border-stone-200 flex justify-center">
+              <div class="mt-16 pt-8 border-t border-stone-200 flex items-center justify-center gap-2">
+                {previousPost && (
+                  <>
+                    <a href={`/life/${previousPost.slug}`} class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+                      &larr; previous
+                    </a>
+                    <span class="text-stone-300">·</span>
+                  </>
+                )}
                 <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
                   &uarr; back to top
                 </a>
+                {nextPost && (
+                  <>
+                    <span class="text-stone-300">·</span>
+                    <a href={`/life/${nextPost.slug}`} class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+                      next &rarr;
+                    </a>
+                  </>
+                )}
               </div>
             </article>
           )}
