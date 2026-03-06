@@ -5,11 +5,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Nate Otenti">
   <main class="min-h-screen flex items-center justify-center p-8">
     <div class="max-w-2xl p-8">
-      <h1 class="text-5xl md:text-6xl font-bold text-accent mb-6 tracking-tight">
+      <h1 class="text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
         Hi, I'm Nate.
       </h1>
       <p class="text-2xl md:text-3xl text-stone-700 mb-10 font-medium tracking-tight">
-        I'm a software engineer working at <button id="block-btn" class="text-terracotta line-through decoration-terracotta decoration-2 cursor-pointer relative">Block<span id="block-toast" class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-stone-800 text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2 no-underline not-italic font-normal tracking-normal">coming soon!</span></button>.
+        I'm a software engineer working at <a href="https://www.nvidia.com/" class="text-nvidia hover:underline">NVIDIA</a>.
       </p>
       <p class="text-lg text-stone-600 leading-relaxed mb-14 max-w-xl">
         When I'm not flipping bits, I'm usually making pizza, playing disc golf,
@@ -17,11 +17,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </p>
 
       <nav class="flex gap-8 font-mono text-sm tracking-tight">
-        <a href="https://github.com/notenti" class="text-stone-600 hover:text-terracotta">github</a>
-        <a href="https://www.linkedin.com/in/nathan-otenti/" class="text-stone-600 hover:text-terracotta">linkedin</a>
+        <a href="https://github.com/notenti" class="text-stone-600 hover:text-nvidia">github</a>
+        <a href="https://www.linkedin.com/in/nathan-otenti/" class="text-stone-600 hover:text-nvidia">linkedin</a>
         <button
           id="copy-email"
-          class="text-stone-600 hover:text-terracotta transition-colors relative cursor-pointer"
+          class="text-stone-600 hover:text-nvidia transition-colors relative cursor-pointer"
           data-email="otenti.nate@gmail.com"
         >
           email
@@ -32,25 +32,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             copied!
           </span>
         </button>
-        <a href="/life" class="text-stone-600 hover:text-terracotta">life</a>
+        <a href="/life" class="text-stone-600 hover:text-nvidia">life</a>
       </nav>
     </div>
   </main>
 
 <script>
-  const blockBtn = document.getElementById('block-btn') as HTMLButtonElement;
-  const blockToast = document.getElementById('block-toast') as HTMLSpanElement;
-
-  blockBtn.addEventListener('click', () => {
-    blockToast.style.opacity = '1';
-    blockToast.style.transform = 'translateX(-50%) translateY(0)';
-
-    setTimeout(() => {
-      blockToast.style.opacity = '0';
-      blockToast.style.transform = 'translateX(-50%) translateY(0.5rem)';
-    }, 1500);
-  });
-
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const toast = document.getElementById('copy-toast') as HTMLSpanElement;
 

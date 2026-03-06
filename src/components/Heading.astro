@@ -21,14 +21,14 @@ const slug = id || textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      class="w-5 h-5 text-terracotta"
+      class="w-5 h-5 text-nvidia"
     >
       <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
     </svg>
   </div>
   <div class="flex flex-col gap-0.5">
     <h2 class="text-xl font-medium text-stone-800 tracking-tight leading-tight">
-      <a href={`#${slug}`} class="hover:text-terracotta transition-colors">
+      <a href={`#${slug}`} class="hover:text-nvidia transition-colors">
         <span set:html={slotContent} />
         <span class="opacity-0 group-hover:opacity-100 transition-opacity text-stone-300 ml-2 text-base font-normal">#</span>
       </a>
@@ -39,7 +39,7 @@ const slug = id || textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          class="text-xs text-stone-400 hover:text-terracotta transition-colors flex items-center gap-1"
+          class="text-xs text-stone-400 hover:text-nvidia transition-colors flex items-center gap-1"
         >
           <span>{location}</span>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3 opacity-50">

@@ -9,12 +9,12 @@ export default {
       },
       colors: {
         accent: {
-          DEFAULT: '#1a1a1a',
-          light: '#525252',
+          DEFAULT: '#76b900',
+          light: '#a4d65e',
         },
-        terracotta: {
-          DEFAULT: '#c2703e',
-          light: '#d4896a',
+        nvidia: {
+          DEFAULT: '#76b900',
+          light: '#a4d65e',
         },
       },
       backgroundColor: {
