@@ -55,7 +55,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <!-- Aurora -->
               <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div class="journey-label cursor-default">
+                <div class="journey-label cursor-pointer">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Aurora</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2018–2020</p>
                 </div>
@@ -71,7 +71,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <!-- Motional -->
               <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div class="journey-label cursor-default">
+                <div class="journey-label cursor-pointer">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Motional</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2020–2022</p>
                 </div>
@@ -87,7 +87,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <!-- Block -->
               <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div class="journey-label cursor-default">
+                <div class="journey-label cursor-pointer">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Block</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2022–2026</p>
                 </div>
@@ -106,7 +106,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                   <div class="w-[6px] h-[6px] rounded-full bg-nvidia"></div>
                   <div class="absolute inset-0 w-[6px] h-[6px] rounded-full bg-nvidia animate-ping opacity-30"></div>
                 </div>
-                <div class="journey-label cursor-default">
+                <div class="journey-label cursor-pointer">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">NVIDIA</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2026-></p>
                 </div>
@@ -179,6 +179,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .journey-tooltip-close:hover {
     color: #57534e;
+  }
+
+  .journey-label p:first-child {
+    transition: color 150ms ease;
+  }
+
+  .journey-label:hover p:first-child {
+    color: #1c1917;
+  }
+
+  .journey-stop > div:first-child {
+    transition: transform 150ms ease;
+  }
+
+  .journey-stop:hover > div:first-child {
+    transform: scale(1.5);
   }
 
   .journey-tooltip p {
