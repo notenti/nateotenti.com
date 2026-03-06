@@ -16,24 +16,91 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         practicing yoga, or working in the garden. I live outside of Boston, MA with my wife and our lovely standard poodle.
       </p>
 
-      <nav class="flex gap-8 font-mono text-sm tracking-tight">
-        <a href="https://github.com/notenti" class="text-stone-600 hover:text-nvidia">github</a>
-        <a href="https://www.linkedin.com/in/nathan-otenti/" class="text-stone-600 hover:text-nvidia">linkedin</a>
-        <button
-          id="copy-email"
-          class="text-stone-600 hover:text-nvidia transition-colors relative cursor-pointer"
-          data-email="otenti.nate@gmail.com"
-        >
-          email
-          <span
-            id="copy-toast"
-            class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-stone-800 text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2"
+      <div class="w-fit relative">
+        <nav id="nav-bar" class="flex gap-8 font-mono text-sm tracking-tight">
+          <button
+            id="toggle-journey"
+            class="text-stone-600 hover:text-nvidia transition-colors cursor-pointer flex items-center gap-1"
           >
-            copied!
-          </span>
-        </button>
-        <a href="/life" class="text-stone-600 hover:text-nvidia">life</a>
-      </nav>
+            journey
+            <svg id="journey-chevron" class="w-2 h-2 text-stone-400 translate-y-0.5 transition-transform duration-300" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 2l4 3-4 3" />
+            </svg>
+          </button>
+          <a href="https://github.com/notenti" class="text-stone-600 hover:text-nvidia">github</a>
+          <a href="https://www.linkedin.com/in/nathan-otenti/" class="text-stone-600 hover:text-nvidia">linkedin</a>
+          <button
+            id="copy-email"
+            class="text-stone-600 hover:text-nvidia transition-colors relative cursor-pointer"
+            data-email="otenti.nate@gmail.com"
+          >
+            email
+            <span
+              id="copy-toast"
+              class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-stone-800 text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2"
+            >
+              copied!
+            </span>
+          </button>
+          <a href="/life" class="text-stone-600 hover:text-nvidia">life</a>
+        </nav>
+
+        <!-- Journey Timeline -->
+        <div
+          id="journey-timeline"
+          class="absolute left-0 right-0 top-full opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out"
+        >
+          <div class="pt-5 pb-1">
+            <div class="flex items-center">
+              <!-- Aurora -->
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+                <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
+                <div>
+                  <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Aurora</p>
+                  <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2018–2020</p>
+                </div>
+              </div>
+
+              <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
+
+              <!-- Motional -->
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+                <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
+                <div>
+                  <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Motional</p>
+                  <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2020–2022</p>
+                </div>
+              </div>
+
+              <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
+
+              <!-- Block -->
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+                <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
+                <div>
+                  <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Block</p>
+                  <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2022–2026</p>
+                </div>
+              </div>
+
+              <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
+
+              <!-- NVIDIA (current) -->
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+                <div class="relative">
+                  <div class="w-[6px] h-[6px] rounded-full bg-nvidia"></div>
+                  <div class="absolute inset-0 w-[6px] h-[6px] rounded-full bg-nvidia animate-ping opacity-30"></div>
+                </div>
+                <div>
+                  <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">NVIDIA</p>
+                  <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2026-></p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -44,11 +111,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   btn.addEventListener('click', async () => {
     await navigator.clipboard.writeText(btn.dataset.email!);
 
-    // Animate toast in
     toast.style.opacity = '1';
     toast.style.transform = 'translateX(-50%) translateY(0)';
 
-    // Add a little bounce to the button
     btn.animate(
       [
         { transform: 'scale(1)' },
@@ -58,11 +123,105 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       { duration: 300, easing: 'ease-out' }
     );
 
-    // Fade toast out after a moment
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateX(-50%) translateY(0.5rem)';
     }, 1500);
+  });
+
+  const toggleBtn = document.getElementById('toggle-journey') as HTMLButtonElement;
+  const timeline = document.getElementById('journey-timeline') as HTMLDivElement;
+  const journeyChevron = document.getElementById('journey-chevron') as SVGElement;
+  const stops = document.querySelectorAll('.journey-stop');
+  const segs = document.querySelectorAll('.timeline-seg');
+  let open = false;
+
+  function resetTimeline() {
+    stops.forEach((stop) => {
+      const el = stop as HTMLElement;
+      el.style.transition = 'none';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(4px)';
+    });
+    segs.forEach((seg) => {
+      const el = seg as HTMLElement;
+      el.style.transition = 'none';
+      el.style.transform = 'scaleX(0)';
+    });
+  }
+
+  const totalDuration = 320;
+  const stopDelays = [0, 60, 150, 280];
+  const segDelays = [30, 100, 210];
+
+  function playEntrance() {
+    resetTimeline();
+    void timeline.offsetWidth;
+
+    stops.forEach((stop, i) => {
+      const el = stop as HTMLElement;
+      setTimeout(() => {
+        el.style.transition = 'opacity 120ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, stopDelays[i]);
+    });
+
+    segs.forEach((seg, i) => {
+      const el = seg as HTMLElement;
+      setTimeout(() => {
+        el.style.transition = 'transform 100ms cubic-bezier(0.22, 1, 0.36, 1)';
+        el.style.transform = 'scaleX(1)';
+      }, segDelays[i]);
+    });
+  }
+
+  function playExit() {
+    // Reverse: last items disappear first (fast), earlier items later (slow)
+    const stopsArr = Array.from(stops) as HTMLElement[];
+    const segsArr = Array.from(segs) as HTMLElement[];
+    const lastStop = stopsArr.length - 1;
+    const lastSeg = segsArr.length - 1;
+
+    stopsArr.forEach((el, i) => {
+      const delay = stopDelays[lastStop - i] * 0.8;
+      setTimeout(() => {
+        el.style.transition = 'opacity 100ms ease-in, transform 100ms ease-in';
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(4px)';
+      }, delay);
+    });
+
+    segsArr.forEach((el, i) => {
+      const delay = segDelays[lastSeg - i] * 0.8;
+      setTimeout(() => {
+        el.style.transition = 'transform 80ms ease-in';
+        el.style.transform = 'scaleX(0)';
+        el.style.transformOrigin = 'right';
+      }, delay);
+    });
+
+    setTimeout(() => {
+      timeline.style.opacity = '0';
+      timeline.style.pointerEvents = 'none';
+    }, totalDuration * 0.8 + 100);
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    open = !open;
+    if (open) {
+      timeline.style.opacity = '1';
+      timeline.style.pointerEvents = 'auto';
+      journeyChevron.style.transform = 'translateY(2px) rotate(90deg)';
+      // Reset seg origins for entrance
+      segs.forEach((seg) => {
+        (seg as HTMLElement).style.transformOrigin = 'left';
+      });
+      requestAnimationFrame(() => playEntrance());
+    } else {
+      journeyChevron.style.transform = 'translateY(2px) rotate(0deg)';
+      playExit();
+    }
   });
 </script>
 
