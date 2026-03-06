@@ -4,12 +4,12 @@ import Lightbox from '../../components/Lightbox.astro';
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 
-const albums = (await getCollection('albums')).sort(
+const posts = (await getCollection('life')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
-const latestAlbum = albums[0];
-const { Content } = latestAlbum ? await latestAlbum.render() : { Content: null };
+const latestPost = posts[0];
+const { Content } = latestPost ? await latestPost.render() : { Content: null };
 
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
@@ -26,14 +26,14 @@ const formatDateLong = (date: Date) => {
 };
 ---
 
-<BaseLayout title="Life - Nate Otenti" description="Travel, photos, and notes.">
+<BaseLayout title="Life - Nate Otenti" description="Photos and thoughts.">
   <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-screen-2xl mx-auto">
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
           <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-          <h1 class="text-3xl font-bold text-accent tracking-tight">Life</h1>
+          <h1 class="text-3xl font-bold text-stone-900 tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
@@ -59,20 +59,22 @@ const formatDateLong = (date: Date) => {
             </button>
           </div>
           <ul class="space-y-4">
-            {albums.map((album, index) => (
+            {posts.map((post, index) => (
               <li>
                 <a
-                  href={`/life/${album.slug}`}
+                  href={`/life/${post.slug}`}
                   class="block transition-colors group"
                 >
-                  <Image
-                    src={album.data.cover}
-                    alt={album.data.title}
-                    width={200}
-                    height={150}
-                    class="w-full aspect-[4/3] object-cover rounded mb-2"
-                    loading="lazy"
-                  />
+                  {post.data.type === 'album' && (
+                    <Image
+                      src={post.data.cover}
+                      alt={post.data.title}
+                      width={200}
+                      height={150}
+                      class="w-full aspect-[4/3] object-cover rounded mb-2"
+                      loading="lazy"
+                    />
+                  )}
                   <span
                     class:list={[
                       'font-medium',
@@ -81,16 +83,12 @@ const formatDateLong = (date: Date) => {
                         : 'text-stone-600 group-hover:text-accent'
                     ]}
                   >
-                    {album.data.title}
+                    {post.data.title}
                   </span>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <time class="font-mono text-xs text-stone-400">{formatDate(album.data.date)}</time>
-                    {album.data.location && (
-                      <>
-                        <span class="text-stone-300">·</span>
-                        <span class="text-xs text-stone-400">{album.data.location}</span>
-                      </>
-                    )}
+                    <time class="font-mono text-xs text-stone-400">{formatDate(post.data.date)}</time>
+                    <span class="text-stone-300">·</span>
+                    <span class="text-xs text-stone-400">{post.data.location}</span>
                   </div>
                 </a>
               </li>
@@ -105,30 +103,26 @@ const formatDateLong = (date: Date) => {
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
             <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-            <h1 class="text-4xl font-bold text-accent tracking-tight">Life</h1>
-            <p class="text-stone-500 mt-2">Travel, photos, and notes.</p>
+            <h1 class="text-4xl font-bold text-stone-900 tracking-tight">Life</h1>
+            <p class="text-stone-500 mt-2">Photos and thoughts.</p>
           </header>
 
-          {albums.length === 0 ? (
+          {posts.length === 0 ? (
             <p class="text-stone-500">No posts yet. Check back soon!</p>
           ) : (
             <article>
               <header class="mb-8">
-                <h2 class="text-2xl md:text-3xl font-semibold text-stone-900 mb-3">{latestAlbum.data.title}</h2>
+                <h2 class="text-2xl md:text-3xl font-semibold text-stone-900 mb-3">{latestPost.data.title}</h2>
                 <div class="flex flex-wrap items-center gap-3 text-sm text-stone-500">
-                  <time class="font-mono">{formatDateLong(latestAlbum.data.date)}</time>
-                  {latestAlbum.data.location && (
-                    <>
-                      <span class="text-stone-300">·</span>
-                      <span>{latestAlbum.data.location}</span>
-                    </>
-                  )}
+                  <time class="font-mono">{formatDateLong(latestPost.data.date)}</time>
+                  <span class="text-stone-300">·</span>
+                  <span>{latestPost.data.location}</span>
                 </div>
               </header>
 
-              {latestAlbum.data.intro && (
+              {latestPost.data.intro && (
                 <p class="text-lg text-stone-600 leading-relaxed mb-10">
-                  {latestAlbum.data.intro}
+                  {latestPost.data.intro}
                 </p>
               )}
 
@@ -151,20 +145,22 @@ const formatDateLong = (date: Date) => {
             <span class="font-mono text-sm text-stone-400 mb-4 block">Posts</span>
             <nav>
               <ul class="space-y-4">
-                {albums.map((album, index) => (
+                {posts.map((post, index) => (
                   <li>
                     <a
-                      href={`/life/${album.slug}`}
+                      href={`/life/${post.slug}`}
                       class="block transition-colors group"
                     >
-                      <Image
-                        src={album.data.cover}
-                        alt={album.data.title}
-                        width={200}
-                        height={150}
-                        class="w-3/4 aspect-[4/3] object-cover rounded mb-2"
-                        loading="lazy"
-                      />
+                      {post.data.type === 'album' && (
+                        <Image
+                          src={post.data.cover}
+                          alt={post.data.title}
+                          width={200}
+                          height={150}
+                          class="w-3/4 aspect-[4/3] object-cover rounded mb-2"
+                          loading="lazy"
+                        />
+                      )}
                       <span
                         class:list={[
                           'font-medium',
@@ -173,16 +169,12 @@ const formatDateLong = (date: Date) => {
                             : 'text-stone-600 group-hover:text-accent'
                         ]}
                       >
-                        {album.data.title}
+                        {post.data.title}
                       </span>
                       <div class="flex items-center gap-2 mt-0.5">
-                        <time class="font-mono text-xs text-stone-400">{formatDate(album.data.date)}</time>
-                        {album.data.location && (
-                          <>
-                            <span class="text-stone-300">·</span>
-                            <span class="text-xs text-stone-400">{album.data.location}</span>
-                          </>
-                        )}
+                        <time class="font-mono text-xs text-stone-400">{formatDate(post.data.date)}</time>
+                        <span class="text-stone-300">·</span>
+                        <span class="text-xs text-stone-400">{post.data.location}</span>
                       </div>
                     </a>
                   </li>

@@ -5,21 +5,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Lightbox from '../../components/Lightbox.astro';
 
 export async function getStaticPaths() {
-  const albums = await getCollection('albums');
-  return albums.map((album) => ({
-    params: { slug: album.slug },
-    props: { album },
+  const posts = await getCollection('life');
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
   }));
 }
 
-const { album } = Astro.props;
-const { Content } = await album.render();
+const { post } = Astro.props;
+const { Content } = await post.render();
 
-const allPosts = (await getCollection('albums')).sort(
+const allPosts = (await getCollection('life')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
-const currentSlug = album.slug;
+const currentSlug = post.slug;
 
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
@@ -36,14 +36,14 @@ const formatDateLong = (date: Date) => {
 };
 ---
 
-<BaseLayout title={`${album.data.title} - Nate Otenti`} description={album.data.intro}>
+<BaseLayout title={`${post.data.title} - Nate Otenti`} description={post.data.intro}>
   <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-screen-2xl mx-auto">
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
           <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-          <h1 class="text-3xl font-bold text-accent tracking-tight">Life</h1>
+          <h1 class="text-3xl font-bold text-stone-900 tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
@@ -69,38 +69,36 @@ const formatDateLong = (date: Date) => {
             </button>
           </div>
           <ul class="space-y-4">
-            {allPosts.map((post) => (
+            {allPosts.map((postItem) => (
               <li>
                 <a
-                  href={`/life/${post.slug}`}
+                  href={`/life/${postItem.slug}`}
                   class="block transition-colors group"
                 >
-                  <Image
-                    src={post.data.cover}
-                    alt={post.data.title}
-                    width={200}
-                    height={150}
-                    class="w-full aspect-[4/3] object-cover rounded mb-2"
-                    loading="lazy"
-                  />
+                  {postItem.data.type === 'album' && (
+                    <Image
+                      src={postItem.data.cover}
+                      alt={postItem.data.title}
+                      width={200}
+                      height={150}
+                      class="w-full aspect-[4/3] object-cover rounded mb-2"
+                      loading="lazy"
+                    />
+                  )}
                   <span
                     class:list={[
                       'font-medium',
-                      post.slug === currentSlug
+                      postItem.slug === currentSlug
                         ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
                         : 'text-stone-600 group-hover:text-accent'
                     ]}
                   >
-                    {post.data.title}
+                    {postItem.data.title}
                   </span>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <time class="font-mono text-xs text-stone-400">{formatDate(post.data.date)}</time>
-                    {post.data.location && (
-                      <>
-                        <span class="text-stone-300">·</span>
-                        <span class="text-xs text-stone-400">{post.data.location}</span>
-                      </>
-                    )}
+                    <time class="font-mono text-xs text-stone-400">{formatDate(postItem.data.date)}</time>
+                    <span class="text-stone-300">·</span>
+                    <span class="text-xs text-stone-400">{postItem.data.location}</span>
                   </div>
                 </a>
               </li>
@@ -115,27 +113,23 @@ const formatDateLong = (date: Date) => {
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
             <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-            <h1 class="text-4xl font-bold text-accent tracking-tight">Life</h1>
-            <p class="text-stone-500 mt-2">Travel, photos, and notes.</p>
+            <h1 class="text-4xl font-bold text-stone-900 tracking-tight">Life</h1>
+            <p class="text-stone-500 mt-2">Photos and thoughts.</p>
           </header>
 
           <article>
             <header class="mb-8">
-              <h2 class="text-2xl md:text-3xl font-semibold text-stone-900 mb-3">{album.data.title}</h2>
+              <h2 class="text-2xl md:text-3xl font-semibold text-stone-900 mb-3">{post.data.title}</h2>
               <div class="flex flex-wrap items-center gap-3 text-sm text-stone-500">
-                <time class="font-mono">{formatDateLong(album.data.date)}</time>
-                {album.data.location && (
-                  <>
-                    <span class="text-stone-300">·</span>
-                    <span>{album.data.location}</span>
-                  </>
-                )}
+                <time class="font-mono">{formatDateLong(post.data.date)}</time>
+                <span class="text-stone-300">·</span>
+                <span>{post.data.location}</span>
               </div>
             </header>
 
-            {album.data.intro && (
+            {post.data.intro && (
               <p class="text-lg text-stone-600 leading-relaxed mb-10">
-                {album.data.intro}
+                {post.data.intro}
               </p>
             )}
 
@@ -157,38 +151,36 @@ const formatDateLong = (date: Date) => {
             <span class="font-mono text-sm text-stone-400 mb-4 block">Posts</span>
             <nav>
               <ul class="space-y-4">
-                {allPosts.map((post) => (
+                {allPosts.map((postItem) => (
                   <li>
                     <a
-                      href={`/life/${post.slug}`}
+                      href={`/life/${postItem.slug}`}
                       class="block transition-colors group"
                     >
-                      <Image
-                        src={post.data.cover}
-                        alt={post.data.title}
-                        width={200}
-                        height={150}
-                        class="w-3/4 aspect-[4/3] object-cover rounded mb-2"
-                        loading="lazy"
-                      />
+                      {postItem.data.type === 'album' && (
+                        <Image
+                          src={postItem.data.cover}
+                          alt={postItem.data.title}
+                          width={200}
+                          height={150}
+                          class="w-3/4 aspect-[4/3] object-cover rounded mb-2"
+                          loading="lazy"
+                        />
+                      )}
                       <span
                         class:list={[
                           'font-medium',
-                          post.slug === currentSlug
+                          postItem.slug === currentSlug
                             ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
                             : 'text-stone-600 group-hover:text-accent'
                         ]}
                       >
-                        {post.data.title}
+                        {postItem.data.title}
                       </span>
                       <div class="flex items-center gap-2 mt-0.5">
-                        <time class="font-mono text-xs text-stone-400">{formatDate(post.data.date)}</time>
-                        {post.data.location && (
-                          <>
-                            <span class="text-stone-300">·</span>
-                            <span class="text-xs text-stone-400">{post.data.location}</span>
-                          </>
-                        )}
+                        <time class="font-mono text-xs text-stone-400">{formatDate(postItem.data.date)}</time>
+                        <span class="text-stone-300">·</span>
+                        <span class="text-xs text-stone-400">{postItem.data.location}</span>
                       </div>
                     </a>
                   </li>
