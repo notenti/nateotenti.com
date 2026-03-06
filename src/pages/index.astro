@@ -53,47 +53,67 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="pt-5 pb-1">
             <div class="flex items-center">
               <!-- Aurora -->
-              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div>
+                <div class="journey-label cursor-default">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Aurora</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2018–2020</p>
+                </div>
+                <div class="journey-tooltip">
+                  <button class="journey-tooltip-close">&times;</button>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vehicula autonoma per vias urbanas navigabat.</p>
+                  <div class="journey-tooltip-arrow"></div>
                 </div>
               </div>
 
               <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
 
               <!-- Motional -->
-              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div>
+                <div class="journey-label cursor-default">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Motional</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2020–2022</p>
+                </div>
+                <div class="journey-tooltip">
+                  <button class="journey-tooltip-close">&times;</button>
+                  <p>Praesent tempor lidar sensorum data processabat et algorithmos perceptionis construebat.</p>
+                  <div class="journey-tooltip-arrow"></div>
                 </div>
               </div>
 
               <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
 
               <!-- Block -->
-              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="w-[6px] h-[6px] rounded-full bg-stone-400"></div>
-                <div>
+                <div class="journey-label cursor-default">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">Block</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2022–2026</p>
+                </div>
+                <div class="journey-tooltip">
+                  <button class="journey-tooltip-close">&times;</button>
+                  <p>Fusce fintech platformam mobilem aedificabat cum systematis paymentorum et Bitcoin integrationibus.</p>
+                  <div class="journey-tooltip-arrow"></div>
                 </div>
               </div>
 
               <div class="timeline-seg flex-1 h-px bg-stone-300 mx-2 origin-left scale-x-0"></div>
 
               <!-- NVIDIA (current) -->
-              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1">
+              <div class="journey-stop flex items-center gap-1.5 shrink-0 opacity-0 translate-y-1 relative">
                 <div class="relative">
                   <div class="w-[6px] h-[6px] rounded-full bg-nvidia"></div>
                   <div class="absolute inset-0 w-[6px] h-[6px] rounded-full bg-nvidia animate-ping opacity-30"></div>
                 </div>
-                <div>
+                <div class="journey-label cursor-default">
                   <p class="font-mono text-[10px] font-medium text-stone-700 leading-none">NVIDIA</p>
                   <p class="font-mono text-[8px] text-stone-400 leading-none mt-0.5">2026-></p>
+                </div>
+                <div class="journey-tooltip">
+                  <button class="journey-tooltip-close">&times;</button>
+                  <p>Nunc GPU-acceleratas computationes et deep learning infrastructuram in cloud platformis developat.</p>
+                  <div class="journey-tooltip-arrow"></div>
                 </div>
               </div>
 
@@ -103,6 +123,70 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </div>
   </main>
+
+<style>
+  .journey-tooltip {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    padding: 12px 14px;
+    border: 1px solid #d6d3d1;
+    border-radius: 0.25rem;
+    background: white;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #44403c;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease, transform 150ms ease;
+    transform: translateX(-50%) translateY(4px);
+    z-index: 50;
+  }
+
+  .journey-tooltip.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .journey-tooltip-arrow {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-left: 1px solid #d6d3d1;
+    border-top: 1px solid #d6d3d1;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  .journey-tooltip-close {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #a8a29e;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px;
+  }
+
+  .journey-tooltip-close:hover {
+    color: #57534e;
+  }
+
+  .journey-tooltip p {
+    margin: 0;
+    padding-right: 12px;
+  }
+</style>
 
 <script>
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
@@ -220,8 +304,41 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       requestAnimationFrame(() => playEntrance());
     } else {
       journeyChevron.style.transform = 'translateY(2px) rotate(0deg)';
+      // Hide any open tooltips
+      document.querySelectorAll('.journey-tooltip.is-visible').forEach((t) => t.classList.remove('is-visible'));
       playExit();
     }
+  });
+
+  // Tooltip hover logic
+  document.querySelectorAll('.journey-stop').forEach((stop) => {
+    const label = stop.querySelector('.journey-label') as HTMLElement;
+    const tooltip = stop.querySelector('.journey-tooltip') as HTMLElement;
+    const closeBtn = stop.querySelector('.journey-tooltip-close') as HTMLButtonElement;
+    let hoverTimeout: ReturnType<typeof setTimeout>;
+
+    label.addEventListener('mouseenter', () => {
+      // Hide any other visible tooltips
+      document.querySelectorAll('.journey-tooltip.is-visible').forEach((t) => {
+        if (t !== tooltip) t.classList.remove('is-visible');
+      });
+      hoverTimeout = setTimeout(() => {
+        tooltip.classList.add('is-visible');
+      }, 200);
+    });
+
+    label.addEventListener('mouseleave', () => {
+      clearTimeout(hoverTimeout);
+    });
+
+    tooltip.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('is-visible');
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tooltip.classList.remove('is-visible');
+    });
   });
 </script>
 
