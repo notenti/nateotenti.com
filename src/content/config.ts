@@ -10,6 +10,7 @@ const life = defineCollection({
       location: z.string(),
       cover: z.string(),
       intro: z.string().optional(),
+      draft: z.boolean().optional(),
     }),
     z.object({
       type: z.literal('text'),
@@ -17,6 +18,7 @@ const life = defineCollection({
       date: z.coerce.date(),
       location: z.string(),
       intro: z.string().optional(),
+      draft: z.boolean().optional(),
     }),
   ]),
 });

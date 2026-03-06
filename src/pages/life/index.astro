@@ -4,7 +4,7 @@ import Lightbox from '../../components/Lightbox.astro';
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 
-const posts = (await getCollection('life')).sort(
+const posts = (await getCollection('life', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
