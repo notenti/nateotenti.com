@@ -27,14 +27,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <path d="M3 2l4 3-4 3" />
             </svg>
           </button>
-          <a href="https://github.com/notenti" class="text-stone-600 hover:text-nvidia">github</a>
-          <a href="https://www.linkedin.com/in/nathan-otenti/" class="text-stone-600 hover:text-nvidia">linkedin</a>
+          <a href="https://github.com/notenti" target="_blank" rel="noopener noreferrer" class="text-stone-600 hover:text-nvidia inline-flex items-center gap-1">
+            github
+            <svg class="w-2 h-2 text-stone-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 8L8 2M8 2H3.5M8 2v4.5" />
+            </svg>
+          </a>
+          <a href="https://www.linkedin.com/in/nathan-otenti/" target="_blank" rel="noopener noreferrer" class="text-stone-600 hover:text-nvidia inline-flex items-center gap-1">
+            linkedin
+            <svg class="w-2 h-2 text-stone-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 8L8 2M8 2H3.5M8 2v4.5" />
+            </svg>
+          </a>
           <button
             id="copy-email"
-            class="text-stone-600 hover:text-nvidia transition-colors relative cursor-pointer"
+            class="text-stone-600 hover:text-nvidia transition-colors relative cursor-pointer inline-flex items-center gap-1"
             data-email="otenti.nate@gmail.com"
           >
             email
+            <svg class="w-2 h-2 text-stone-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="6" height="6" rx="0.5" />
+              <path d="M3 7H1.5a.5.5 0 01-.5-.5V1.5a.5.5 0 01.5-.5H6a.5.5 0 01.5.5V3" />
+            </svg>
             <span
               id="copy-toast"
               class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-stone-800 text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2"
