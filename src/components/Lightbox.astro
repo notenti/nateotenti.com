@@ -45,9 +45,9 @@
   // Close on button click
   closeBtn.addEventListener('click', closeLightbox);
 
-  // Close on background click
+  // Close on clicking anywhere in the lightbox (background or image)
   lightbox.addEventListener('click', function(e) {
-    if (e.target === lightbox || e.target.parentElement === lightbox) {
+    if (e.target !== closeBtn && !closeBtn.contains(e.target)) {
       closeLightbox();
     }
   });
