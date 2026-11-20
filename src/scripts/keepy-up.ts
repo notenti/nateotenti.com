@@ -344,6 +344,10 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
     ball.x = clamp(ball.x + ball.vx * dt, ball.r, W - ball.r);
     if (intro.rested) {
       ball.vx *= Math.exp(-6 * dt);
+      // On narrow screens the roll can carry it into the corner; ease it back
+      // to somewhere comfortable to tap.
+      const inset = Math.min(48, W * 0.15);
+      ball.x = lerp(ball.x, clamp(ball.x, inset, W - inset), 1 - Math.exp(-8 * dt));
       readySx = lerp(readySx, 1, 1 - Math.exp(-14 * dt));
       readySy = lerp(readySy, 1, 1 - Math.exp(-14 * dt));
       return;
