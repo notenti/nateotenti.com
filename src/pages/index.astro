@@ -3,8 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Nate Otenti">
-  <main class="min-h-screen flex items-center justify-center p-8">
-    <div class="max-w-2xl p-8">
+  <main class="min-h-svh flex items-center justify-center px-6 py-16 sm:p-8">
+    <div class="max-w-2xl min-w-0 sm:p-8">
       <h1 data-game-text class="text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
         Hi, I'm Nate<span id="game-dot" data-game-skip role="button" tabindex="0" aria-label="Play a game" class="game-dot">.</span>
       </h1>
@@ -16,8 +16,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         practicing yoga, or working in the garden. I live outside of Boston, MA with my wife and our lovely standard poodle.
       </p>
 
-      <div class="w-fit relative">
-        <nav id="nav-bar" data-game-text class="flex gap-8 font-mono text-sm tracking-tight">
+      <div class="w-full sm:w-fit relative">
+        <nav id="nav-bar" data-game-text class="flex flex-wrap justify-between gap-x-2 gap-y-3 sm:justify-start sm:gap-8 font-mono text-[13px] sm:text-sm tracking-tight">
           <button
             id="toggle-journey"
             class="text-stone-600 hover:text-nvidia transition-colors cursor-pointer flex items-center gap-1"
@@ -235,6 +235,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     margin: 0;
     padding-right: 12px;
   }
+
+  /* On phones the timeline spans the full width, so the end tooltips would
+     hang off the screen. Pin them to their edge instead of centering. */
+  @media (max-width: 639px) {
+    .journey-stop:first-of-type .journey-tooltip {
+      left: 0;
+      transform: translateY(4px);
+    }
+    .journey-stop:last-of-type .journey-tooltip {
+      left: auto;
+      right: 0;
+      transform: translateY(4px);
+    }
+    .journey-stop:first-of-type .journey-tooltip.is-visible,
+    .journey-stop:last-of-type .journey-tooltip.is-visible {
+      transform: translateY(0);
+    }
+    .journey-stop:first-of-type .journey-tooltip-arrow {
+      left: 6px;
+    }
+    .journey-stop:last-of-type .journey-tooltip-arrow {
+      left: auto;
+      right: -2px;
+    }
+  }
 </style>
 
 <script>
@@ -381,6 +406,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       document.querySelectorAll('.journey-tooltip.is-visible').forEach((t) => t.classList.remove('is-visible'));
       playExit();
     }
+  });
+
+  // Touch has no mouseleave: tapping anywhere outside an open tooltip closes it.
+  document.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('.journey-stop')) return;
+    document.querySelectorAll('.journey-tooltip.is-visible').forEach((t) => t.classList.remove('is-visible'));
   });
 
   // Tooltip hover logic
