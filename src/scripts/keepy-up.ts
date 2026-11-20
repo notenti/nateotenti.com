@@ -269,6 +269,10 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
   letters.forEach((l, i) => (l.order = i));
 
   // --- The period ---------------------------------------------------------
+  // Freeze the hover lift/scale/color so we measure (and later hand back to)
+  // the period's resting state.
+  dot.dataset.playing = '';
+  void dot.offsetWidth;
   const dotCs = getComputedStyle(dot);
   const dotFont = `${dotCs.fontStyle} ${dotCs.fontWeight} ${dotCs.fontSize} ${dotCs.fontFamily}`;
   const dm = measure(dotFont, '.');
@@ -290,7 +294,6 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
   let stateT = 0;
   const ball = { x: glyph.x, y: glyph.y, vx: 0, vy: 0, r: glyph.r, squashT: 0, squashAng: 0 };
   const endFrom = { x: 0, y: 0, r: 0 };
-  let landed = false;
   let lastKick = -1;
   let hitstop = 0;
   let lives = LIVES;
@@ -633,26 +636,49 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
       L.a = lerp(R.a, 0, e);
       L.alpha = lerp(R.alpha, 1, Math.min(1, t * 2));
     }
-    // Arc back up and drop onto the baseline with a little click.
-    const FLY = 0.6;
+    // Thrown back up: decelerate into an apex just above the period, fall
+    // under gravity onto the baseline, then a damped squash anchored to the
+    // baseline that settles to exactly the glyph's shape and position.
+    const FLY = 0.5;
+    const DROP = 0.16;
+    const SETTLE = 0.2;
+    const apexY = glyph.y - 34;
     let ballDone = false;
+    ball.squashT = 0;
     if (stateT < FLY) {
       const k = stateT / FLY;
-      const be = easeInOutCubic(k);
-      const hump = 80 + Math.max(0, endFrom.y - glyph.y) * 0.5;
-      ball.x = lerp(endFrom.x, glyph.x, be);
-      ball.y = lerp(endFrom.y, glyph.y, be) - hump * 4 * be * (1 - be);
-      ball.r = lerp(endFrom.r, glyph.r, easeInOutCubic(clamp(k / 0.85, 0, 1)));
+      const e = 1 - (1 - k) * (1 - k); // fast launch, slows into the apex
+      const cx = lerp(endFrom.x, glyph.x, 0.5);
+      const cy = Math.min(endFrom.y, apexY) - 90;
+      const u = 1 - e;
+      ball.x = u * u * endFrom.x + 2 * u * e * cx + e * e * glyph.x;
+      ball.y = u * u * endFrom.y + 2 * u * e * cy + e * e * apexY;
+      ball.r = lerp(endFrom.r, glyph.r, easeInOutCubic(clamp(k / 0.9, 0, 1)));
       readySx = readySy = 1;
+    } else if (stateT < FLY + DROP) {
+      const k = (stateT - FLY) / DROP;
+      ball.x = glyph.x;
+      ball.y = lerp(apexY, glyph.y, k * k); // constant acceleration
+      ball.r = glyph.r;
+      const st = 1 + 0.18 * k;
+      readySx = 1 / st;
+      readySy = st;
     } else {
-      if (!landed) {
-        landed = true;
-        ball.x = glyph.x;
+      const t = stateT - FLY - DROP;
+      const k = Math.min(1, t / SETTLE);
+      // damped spring, forced to exactly zero at the end
+      const amp = Math.exp(-t * 22) * Math.cos(t * 48) * (1 - k);
+      readySy = 1 - 0.32 * amp;
+      readySx = 1 + 0.26 * amp;
+      ball.x = glyph.x;
+      ball.r = glyph.r;
+      // keep the bottom of the dot planted on the baseline
+      ball.y = glyph.y + glyph.r * (1 - readySy);
+      ballDone = k >= 1;
+      if (ballDone) {
+        readySx = readySy = 1;
         ball.y = glyph.y;
-        ball.r = glyph.r;
-        squash(0, -1);
       }
-      ballDone = stateT >= FLY + SQUASH_DUR;
     }
     ball.vx = ball.vy = 0;
     if (allDone && ballDone) cleanup();
@@ -905,6 +931,15 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
     for (const L of letters) L.el.style.visibility = '';
     restore();
     dot.style.visibility = '';
+    // Keep the hover lift/green suppressed until the pointer is really off the
+    // period. (:hover is stale right after the overlay goes away, so wait for
+    // an actual pointer move to decide.)
+    const onMove = () => {
+      if (dot.matches(':hover')) return;
+      delete dot.dataset.playing;
+      window.removeEventListener('pointermove', onMove);
+    };
+    window.addEventListener('pointermove', onMove);
     onEnd();
   }
 

@@ -153,6 +153,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transform: translateY(-3px) scale(1.25);
   }
 
+  .game-dot[data-playing] {
+    color: inherit;
+    transform: none;
+    transition: none;
+  }
+
   .journey-tooltip {
     position: absolute;
     top: calc(100% + 12px);
