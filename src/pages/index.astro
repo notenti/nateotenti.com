@@ -5,19 +5,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Nate Otenti">
   <main class="min-h-screen flex items-center justify-center p-8">
     <div class="max-w-2xl p-8">
-      <h1 class="text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
-        Hi, I'm Nate.
+      <h1 data-game-text class="text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
+        Hi, I'm Nate<span id="game-dot" data-game-skip role="button" tabindex="0" aria-label="Play a game" class="game-dot">.</span>
       </h1>
-      <p class="text-2xl md:text-3xl text-stone-700 mb-10 font-medium tracking-tight">
+      <p data-game-text class="text-2xl md:text-3xl text-stone-700 mb-10 font-medium tracking-tight">
         I'm a software engineer working at <a href="https://www.nvidia.com/" class="text-nvidia hover:underline">NVIDIA</a>.
       </p>
-      <p class="text-lg text-stone-600 leading-relaxed mb-14 max-w-xl">
+      <p data-game-text class="text-lg text-stone-600 leading-relaxed mb-14 max-w-xl">
         When I'm not flipping bits, I'm usually making pizza, playing disc golf,
         practicing yoga, or working in the garden. I live outside of Boston, MA with my wife and our lovely standard poodle.
       </p>
 
       <div class="w-fit relative">
-        <nav id="nav-bar" class="flex gap-8 font-mono text-sm tracking-tight">
+        <nav id="nav-bar" data-game-text class="flex gap-8 font-mono text-sm tracking-tight">
           <button
             id="toggle-journey"
             class="text-stone-600 hover:text-nvidia transition-colors cursor-pointer flex items-center gap-1"
@@ -51,6 +51,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             </svg>
             <span
               id="copy-toast"
+              data-game-skip
               class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-stone-800 text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2"
             >
               copied!
@@ -139,6 +140,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </main>
 
 <style>
+  .game-dot {
+    display: inline-block;
+    cursor: pointer;
+    outline: none;
+    transition: color 150ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .game-dot:hover,
+  .game-dot:focus-visible {
+    color: #76b900;
+    transform: translateY(-3px) scale(1.25);
+  }
+
   .journey-tooltip {
     position: absolute;
     top: calc(100% + 12px);
@@ -218,6 +232,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </style>
 
 <script>
+  const gameDot = document.getElementById('game-dot') as HTMLElement;
+  let playing = false;
+  const loadGame = () => import('../scripts/keepy-up');
+
+  async function launchGame() {
+    if (playing) return;
+    playing = true;
+    gameDot.blur();
+    const { startKeepyUp } = await loadGame();
+    startKeepyUp(gameDot, () => {
+      playing = false;
+    });
+  }
+
+  gameDot.addEventListener('pointerenter', loadGame, { once: true });
+  gameDot.addEventListener('focus', loadGame, { once: true });
+  gameDot.addEventListener('click', launchGame);
+  gameDot.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      launchGame();
+    }
+  });
+
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const toast = document.getElementById('copy-toast') as HTMLSpanElement;
 
