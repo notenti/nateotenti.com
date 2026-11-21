@@ -3,6 +3,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Nate Otenti">
+  <div
+    id="found-counter"
+    aria-live="polite"
+    class="fixed bottom-4 left-4 font-mono text-[11px] text-stone-400 opacity-0 transition-opacity duration-500 pointer-events-none select-none"
+  ></div>
   <main class="min-h-svh flex items-center justify-center px-6 py-16 sm:p-8">
     <div class="max-w-2xl min-w-0 sm:p-8">
       <h1 data-game-text class="text-4xl sm:text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
@@ -286,6 +291,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   async function launchGame() {
     if (playing) return;
     playing = true;
+    markFound('keepy-up');
     gameDot.blur();
     const { startKeepyUp } = await loadGame();
     startKeepyUp(gameDot, () => {
@@ -299,6 +305,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   async function launchDiscGolf() {
     if (playing) return;
     playing = true;
+    markFound('disc-golf');
     discPhrase.blur();
     const { startDiscGolf } = await loadDiscGolf();
     startDiscGolf(discPhrase, () => {
@@ -338,29 +345,159 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
   });
 
+  // --- Finding the games -------------------------------------------------
+  // A small counter appears once you've found one, and remembers.
+  const GAMES = ['keepy-up', 'disc-golf', 'paper-plane'];
+  const counter = document.getElementById('found-counter') as HTMLElement;
+  function readFound(): string[] {
+    try {
+      return JSON.parse(localStorage.getItem('games-found') || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function renderFound(flash = false) {
+    const found = readFound().filter((g) => GAMES.includes(g));
+    if (!found.length) return;
+    counter.textContent = `${found.length} of ${GAMES.length} found`;
+    counter.style.opacity = '1';
+    if (flash) counter.animate([{ color: '#76b900' }, { color: '#76b900', offset: 0.6 }, { color: '' }], { duration: 1600 });
+  }
+  function markFound(id: string) {
+    const found = readFound();
+    if (found.includes(id)) return;
+    found.push(id);
+    try {
+      localStorage.setItem('games-found', JSON.stringify(found));
+    } catch {
+      /* private mode */
+    }
+    renderFound(true);
+  }
+  renderFound();
+
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const toast = document.getElementById('copy-toast') as HTMLSpanElement;
 
-  btn.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(btn.dataset.email!);
+  // One click copies, as always. The toast then offers the hidden game:
+  // click again within a few seconds and the copy icon folds into a paper
+  // plane.
+  const copyIcon = btn.querySelector('svg');
+  const loadPaperPlane = () => import('../scripts/paper-plane');
+  btn.addEventListener('pointerenter', () => loadPaperPlane(), { once: true });
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  let armedUntil = 0;
+  let toastTimer = 0;
 
+  function showToast(text: string, ms = 1500) {
+    toast.textContent = text;
     toast.style.opacity = '1';
-    toast.style.transform = 'translateX(-50%) translateY(0)';
+    // keep it on screen when the button sits near an edge (phones)
+    toast.style.setProperty('--nudge', '0px');
+    const r = toast.getBoundingClientRect();
+    // clientWidth, not innerWidth: an overflowing toast widens the page
+    const vw = document.documentElement.clientWidth;
+    const nudge = Math.min(0, vw - 8 - r.right) + Math.max(0, 8 - r.left);
+    toast.style.setProperty('--nudge', `${nudge}px`);
+    toast.style.transform = 'translateX(calc(-50% + var(--nudge))) translateY(0)';
+    // while it's offering the game, the toast itself is tappable (it sits
+    // inside the button, so a tap on it counts as the second click)
+    toast.style.pointerEvents = 'auto';
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toast.style.pointerEvents = '';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(calc(-50% + var(--nudge))) translateY(0.5rem)';
+    }, ms);
+  }
 
+  btn.addEventListener('click', async () => {
+    if (playing) return;
+    if (performance.now() < armedUntil) {
+      armedUntil = 0;
+      playing = true;
+      markFound('paper-plane');
+      showToast('sending…', 700);
+      btn.blur();
+      const [{ startPaperPlane }] = await Promise.all([
+        loadPaperPlane(),
+        new Promise((r) => setTimeout(r, 250)),
+      ]);
+      startPaperPlane(copyIcon, (won) => {
+        playing = false;
+        if (won) showToast('all sent.');
+      });
+      return;
+    }
+
+    navigator.clipboard.writeText(btn.dataset.email!).catch(() => {});
     btn.animate(
-      [
-        { transform: 'scale(1)' },
-        { transform: 'scale(1.2)' },
-        { transform: 'scale(1)' },
-      ],
+      [{ transform: 'scale(1)' }, { transform: 'scale(1.2)' }, { transform: 'scale(1)' }],
       { duration: 300, easing: 'ease-out' }
     );
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(-50%) translateY(0.5rem)';
-    }, 1500);
+    armedUntil = performance.now() + 3000;
+    showToast(coarsePointer ? 'copied! · tap again to send it' : 'copied! · click again to send it', 3000);
   });
+
+  // Every so often, while the page sits idle, one of the game doors gives a
+  // small wink, so they can be found without hovering (phones). Doors you
+  // haven't found yet go first; reduced-motion users get none.
+  const doors = [
+    {
+      id: 'keepy-up',
+      el: gameDot,
+      frames: [
+        { transform: 'translateY(0)' },
+        { transform: 'translateY(-7px)', offset: 0.35 },
+        { transform: 'translateY(0)', offset: 0.65 },
+        { transform: 'translateY(-2px)', offset: 0.82 },
+        { transform: 'translateY(0)' },
+      ],
+    },
+    {
+      id: 'disc-golf',
+      el: discPhrase,
+      frames: [
+        { transform: 'rotate(0)' },
+        { transform: 'rotate(-4deg)', offset: 0.25 },
+        { transform: 'rotate(3deg)', offset: 0.5 },
+        { transform: 'rotate(-1.5deg)', offset: 0.75 },
+        { transform: 'rotate(0)' },
+      ],
+    },
+    {
+      id: 'paper-plane',
+      el: copyIcon as Element,
+      frames: [
+        { transform: 'translate(0, 0) rotate(0)' },
+        { transform: 'translate(2px, -3px) rotate(-14deg)', offset: 0.4 },
+        { transform: 'translate(0, 0) rotate(6deg)', offset: 0.7 },
+        { transform: 'translate(0, 0) rotate(0)' },
+      ],
+    },
+  ];
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let lastActivity = performance.now();
+    let nextWink = performance.now() + 4000;
+    let turn = 0;
+    const bump = () => (lastActivity = performance.now());
+    for (const ev of ['pointermove', 'pointerdown', 'keydown', 'scroll']) {
+      window.addEventListener(ev, bump, { passive: true });
+    }
+    setInterval(() => {
+      const now = performance.now();
+      if (playing || document.hidden || now < nextWink || now - lastActivity < 2500) return;
+      const found = readFound();
+      const pool = doors.filter((d) => d.el && !found.includes(d.id));
+      const pick = (pool.length ? pool : doors)[turn++ % (pool.length || doors.length)];
+      const r = pick.el.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) {
+        pick.el.animate(pick.frames, { duration: 700, easing: 'ease-in-out' });
+      }
+      // found them all? wink much less often
+      nextWink = now + (pool.length ? 11000 + Math.random() * 4000 : 30000);
+    }, 500);
+  }
 
   const toggleBtn = document.getElementById('toggle-journey') as HTMLButtonElement;
   const timeline = document.getElementById('journey-timeline') as HTMLDivElement;
