@@ -1,8 +1,8 @@
 // Paper plane: the copy icon by "email" folds into a paper plane and
 // launches. Hold anywhere to pull the nose up and climb; let go and it
 // dives and picks up speed. Climb too long and it stalls. Fly through the
-// envelopes to deliver mail; clipping letters slows you down, hitting the
-// floor crumples the plane. The screen wraps left to right.
+// envelopes to deliver mail. Smacking into letters creases the plane (three
+// creases and it crumples), and so does hitting the floor. The screen wraps left to right.
 
 import {
   INK,
@@ -37,6 +37,7 @@ interface Ring { x: number; y: number; r0: number; r1: number; t: number; life: 
 interface Pop { x: number; y: number; text: string; color: string; size: number; t: number; life: number }
 
 const DELIVERIES = 5;
+const CREASES = 3; // hits it can take before it crumples
 const HIT_R = 6;
 const ENV_W = 22;
 const ENV_H = 15;
@@ -97,6 +98,9 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
   let hintAlpha = 0;
   let crumple = 0;
   let climbT = 0;
+  let creases = 0;
+  let invuln = 0;
+  let creaseT = 1; // time since the last crease, for the HUD flash
 
   const pop = (x: number, y: number, text: string, color = INK, size = 13) =>
     pops.push({ x, y, text, color, size, t: 0, life: 1 });
@@ -186,6 +190,7 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
   }
 
   function stepFlight(dt: number) {
+    invuln = Math.max(0, invuln - dt);
     // pitch: hold to pull the nose up, let go and it eases into a dive.
     // Until the first hold it just glides gently, so nobody crashes while
     // reading the hint.
@@ -243,6 +248,17 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
         plane.a = clamp(plane.a + (hit.ny < 0 ? -0.35 : 0.35), -MAX_PITCH, MAX_PITCH);
         plane.wobble = 1;
         strike(t, hit.nx, hit.ny);
+        // a real smack (not a graze) creases the paper
+        if (along < -0.3 && invuln <= 0) {
+          creases++;
+          invuln = 0.7;
+          creaseT = 0;
+          if (creases >= CREASES) {
+            crash();
+            return;
+          }
+          pop(plane.x, plane.y - 18, CREASES - creases === 1 ? 'one more and it crumples' : 'creased', MUTED, 11);
+        }
       }
     }
 
@@ -358,6 +374,22 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    // creases: crooked fold lines across the wing, one per hit
+    ctx.strokeStyle = 'rgba(28,25,23,0.55)';
+    ctx.lineWidth = 1;
+    const folds = [
+      [4, -1, -1, -4.5, -5, -3],
+      [-2, -0.5, -6, -5.5, -8, -4],
+      [9, -0.5, 5, -2.5, 2, -1.5],
+    ];
+    for (let i = 0; i < Math.min(creases, folds.length); i++) {
+      const f = folds[i];
+      ctx.beginPath();
+      ctx.moveTo(f[0], f[1]);
+      ctx.lineTo(f[2], f[3]);
+      ctx.lineTo(f[4], f[5]);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -444,7 +476,12 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
     }
     ctx.globalAlpha = 1;
 
-    if (plane.scale > 0.02) drawPlane(plane.x, plane.y, plane.a, plane.scale, crumple);
+    if (plane.scale > 0.02) {
+      // blink during the grace after a crease
+      ctx.globalAlpha = invuln > 0 && Math.floor(time * 16) % 2 ? 0.35 : 1;
+      drawPlane(plane.x, plane.y, plane.a, plane.scale, crumple);
+      ctx.globalAlpha = 1;
+    }
 
     for (const p of pops) {
       const t = p.t / p.life;
@@ -476,6 +513,28 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
         ctx.arc(x, pad + 26, 2.5, 0, Math.PI * 2);
         ctx.fill();
       }
+      // hits left: little paper darts, greyed out as they're used up
+      for (let i = 0; i < CREASES; i++) {
+        const x = W - pad - 4 - (CREASES - 1 - i) * 13;
+        const y = pad + 40;
+        const left = i < CREASES - creases;
+        const justLost = !left && i === CREASES - creases && creaseT < 0.5;
+        ctx.save();
+        ctx.translate(x, y);
+        if (justLost) ctx.scale(1 + (0.5 - creaseT), 1 + (0.5 - creaseT));
+        ctx.fillStyle = left ? '#fafaf9' : 'transparent';
+        ctx.strokeStyle = left ? INK : '#d6d3d1';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(5, 0);
+        ctx.lineTo(-4, -3);
+        ctx.lineTo(-2, 0);
+        ctx.lineTo(-4, 2.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
     }
     if (hintAlpha > 0.01) {
       ctx.globalAlpha = hintAlpha;
@@ -504,6 +563,7 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
     hudAlpha = lerp(hudAlpha, state === 'fly' || state === 'crash' ? 1 : 0, ease(8, dt));
     hintAlpha = lerp(hintAlpha, (state === 'fly' || state === 'launch') && !held ? 1 : 0, ease(held ? 10 : 4, dt));
     plane.wobble = Math.max(0, plane.wobble - dt * 3);
+    creaseT += dt;
     env.scale = env.alive ? Math.min(1, env.scale + dt / 0.3) : Math.max(0, env.scale - dt / 0.2);
 
     if (state === 'launch') {
