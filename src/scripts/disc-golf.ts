@@ -44,6 +44,7 @@ const DRAG_K = 1.1; // speed lost per second, proportional
 const DRAG_C = 140; // speed lost per second, constant
 const STOP_SPEED = 16;
 const FADE = 2.4; // how hard the disc hooks left as it slows
+const CURVE_K = 2.6; // how hard a fully shaped throw bends
 const MAX_THROWS = 8;
 const SPRING_K = 700;
 const SPRING_C = 16;
@@ -102,7 +103,7 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
 
   const nav = document.getElementById('nav-bar');
   const navBottom = nav?.getBoundingClientRect().bottom ?? H * 0.75;
-  const tee = { x: W / 2, y: clamp(navBottom + 64, H * 0.5, H - 48) };
+  const tee = { x: W / 2, y: clamp(navBottom + 64, H * 0.5, H - 80) };
 
   // Baskets land somewhere new every round: in a clear spot, a fair throw
   // from the last one, and preferably tucked near some text so the letters
@@ -162,9 +163,19 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
   let holeIdx = 0;
   let throws = 0;
   let thrown = false;
-  const disc = { x: home.x, y: home.y, vx: 0, vy: 0, s0: 1, r: 0, spin: 0, h: 0, sq: 0 };
+  const disc = { x: home.x, y: home.y, vx: 0, vy: 0, s0: 1, curve: 0, r: 0, spin: 0, h: 0, sq: 0 };
   const basket = { x: 0, y: 0, scale: 0, target: 0, rattle: 0, caught: false };
-  const aim = { active: false, keyboard: false, px: 0, py: 0, ang: 0, power: 0, ptr: -1 };
+  const aim = {
+    active: false,
+    keyboard: false,
+    px: 0,
+    py: 0,
+    ang: 0,
+    power: 0,
+    curve: 0, // -1 bends left, +1 bends right
+    ptr: -1,
+    path: [] as { x: number; y: number }[],
+  };
   const endFrom = { x: 0, y: 0 };
   let hudAlpha = 0;
   let hintAlpha = 0;
@@ -235,6 +246,8 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     aim.px = e.clientX;
     aim.py = e.clientY;
     aim.power = 0;
+    aim.curve = 0;
+    aim.path = [{ x: e.clientX, y: e.clientY }];
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = 'grabbing';
   };
@@ -246,7 +259,39 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     const len = Math.hypot(dx, dy);
     aim.power = clamp(len / PULL_MAX, 0, 1);
     if (len > 4) aim.ang = Math.atan2(dy, dx);
+    aim.path.push({ x: e.clientX, y: e.clientY });
+    aim.curve = curveOfDrag(aim.path);
   };
+
+  // Shape the shot by pulling back in an arc: the throw bends the way the
+  // drag bends. Measured as how far the halfway point of the drag sits off
+  // the straight line from start to finish.
+  function curveOfDrag(path: { x: number; y: number }[]) {
+    const a = path[0];
+    const b = path[path.length - 1];
+    const cx = b.x - a.x;
+    const cy = b.y - a.y;
+    const L = Math.hypot(cx, cy);
+    if (L < 30 || path.length < 3) return 0;
+    let total = 0;
+    for (let i = 1; i < path.length; i++) total += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+    let acc = 0;
+    let m = a;
+    for (let i = 1; i < path.length; i++) {
+      const seg = Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+      if (acc + seg >= total / 2) {
+        const k = seg ? (total / 2 - acc) / seg : 0;
+        m = { x: lerp(path[i - 1].x, path[i].x, k), y: lerp(path[i - 1].y, path[i].y, k) };
+        break;
+      }
+      acc += seg;
+    }
+    // y is down, so a positive cross product means right of the drag
+    const dev = (cx * (m.y - a.y) - cy * (m.x - a.x)) / L;
+    const ratio = dev / L;
+    const mag = clamp((Math.abs(ratio) - 0.04) / 0.26, 0, 1);
+    return Math.sign(ratio) * mag;
+  }
   const onPointerUp = (e: PointerEvent) => {
     if (!aim.active || e.pointerId !== aim.ptr) return;
     aim.active = false;
@@ -266,8 +311,10 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
       e.preventDefault();
       aim.active = true;
       aim.keyboard = true;
-      if (k === 'ArrowLeft') aim.ang -= e.shiftKey ? 0.02 : 0.08;
-      if (k === 'ArrowRight') aim.ang += e.shiftKey ? 0.02 : 0.08;
+      if (k === 'ArrowLeft' && e.shiftKey) aim.curve = clamp(aim.curve - 0.1, -1, 1);
+      else if (k === 'ArrowLeft') aim.ang -= 0.06;
+      if (k === 'ArrowRight' && e.shiftKey) aim.curve = clamp(aim.curve + 0.1, -1, 1);
+      else if (k === 'ArrowRight') aim.ang += 0.06;
       if (k === 'ArrowUp') aim.power = clamp(aim.power + 0.05, 0.05, 1);
       if (k === 'ArrowDown') aim.power = clamp(aim.power - 0.05, 0.05, 1);
     } else if ((k === ' ' || k === 'Enter') && aim.active) {
@@ -281,10 +328,11 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
   };
 
   function release() {
-    const s0 = 90 + Math.pow(aim.power, 1.15) * (VMAX - 90);
+    const s0 = speedFor(aim.power);
     disc.vx = Math.cos(aim.ang) * s0;
     disc.vy = Math.sin(aim.ang) * s0;
     disc.s0 = s0;
+    disc.curve = aim.curve;
     throws++;
     thrown = true;
     trail.length = 0;
@@ -320,20 +368,47 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     }
   }
 
-  function stepFlight(dt: number) {
-    let s = Math.hypot(disc.vx, disc.vy);
-    const p = clamp(s / disc.s0, 0, 1);
-    // A little high-speed turn right, then a growing fade left as it slows.
-    const w = FADE * (0.22 * p * p * p - (1 - p) * (1 - p));
+  /** Turn and slow the velocity for one step; returns the new speed. */
+  function fly(d: { vx: number; vy: number; s0: number; curve: number }, dt: number) {
+    const s = Math.hypot(d.vx, d.vy);
+    const p = clamp(s / d.s0, 0, 1);
+    // The shaped bend (strongest while it's fast), a little high-speed turn
+    // right, then the natural fade left as it slows.
+    const w = d.curve * CURVE_K * (0.3 + 0.7 * p) + FADE * (0.22 * p * p * p - (1 - p) * (1 - p));
     const c = Math.cos(w * dt);
     const sn = Math.sin(w * dt);
-    const vx = disc.vx * c - disc.vy * sn;
-    const vy = disc.vx * sn + disc.vy * c;
+    const vx = d.vx * c - d.vy * sn;
+    const vy = d.vx * sn + d.vy * c;
     const ns = Math.max(0, s - (DRAG_K * s + DRAG_C) * dt);
     const f = s > 0 ? ns / s : 0;
-    disc.vx = vx * f;
-    disc.vy = vy * f;
-    s = ns;
+    d.vx = vx * f;
+    d.vy = vy * f;
+    return ns;
+  }
+
+  const speedFor = (power: number) => 90 + Math.pow(power, 1.15) * (VMAX - 90);
+
+  /** Where a throw would go in open air (no letters), for the aim preview. */
+  function predict(ang: number, power: number, curve: number) {
+    const s0 = speedFor(power);
+    const d = { vx: Math.cos(ang) * s0, vy: Math.sin(ang) * s0, s0, curve };
+    let x = disc.x;
+    let y = disc.y;
+    const pts = [{ x, y }];
+    const dt = 1 / 60;
+    for (let i = 0; i < 600; i++) {
+      const sp = fly(d, dt);
+      x += d.vx * dt;
+      y += d.vy * dt;
+      pts.push({ x, y });
+      if (sp < STOP_SPEED) break;
+    }
+    return pts;
+  }
+
+  function stepFlight(dt: number) {
+    const p = clamp(Math.hypot(disc.vx, disc.vy) / disc.s0, 0, 1);
+    const s = fly(disc, dt);
     disc.x += disc.vx * dt;
     disc.y += disc.vy * dt;
     disc.h = 4 * p * (1 - p);
@@ -610,19 +685,31 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     }
     ctx.globalAlpha = 1;
 
-    // aim guide
+    // aim guide: the first stretch of the predicted (open-air) flight, so
+    // you can see the shape without being handed the landing spot
     if (state === 'aim' && (aim.active || aim.keyboard) && aim.power > 0.02) {
-      const len = 22 + aim.power * 120;
-      const cx = Math.cos(aim.ang);
-      const cy = Math.sin(aim.ang);
+      const pts = predict(aim.ang, aim.power, aim.curve);
+      let total = 0;
+      for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      const show = Math.max(40, total * 0.55);
       const green = aim.power > 0.97;
       ctx.fillStyle = green ? GREEN : INK;
-      for (let d = DISC_R + 8; d < DISC_R + len; d += 8) {
-        const k = (d - DISC_R) / len;
-        ctx.globalAlpha = 0.55 * (1 - k * 0.8);
-        ctx.beginPath();
-        ctx.arc(disc.x + cx * d, disc.y + cy * d, 1.6, 0, Math.PI * 2);
-        ctx.fill();
+      let acc = 0;
+      let next = DISC_R + 8;
+      for (let i = 1; i < pts.length && acc < show; i++) {
+        const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        while (next <= acc + seg && next < show) {
+          const k = (next - acc) / seg;
+          const x = lerp(pts[i - 1].x, pts[i].x, k);
+          const y = lerp(pts[i - 1].y, pts[i].y, k);
+          const f = next / show;
+          ctx.globalAlpha = 0.55 * (1 - f * 0.85);
+          ctx.beginPath();
+          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+          next += 9;
+        }
+        acc += seg;
       }
       ctx.globalAlpha = 0.35;
       ctx.strokeStyle = green ? GREEN : INK;
@@ -701,8 +788,8 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
       ctx.textAlign = 'center';
       ctx.fillStyle = MUTED;
       const hint = coarse
-        ? 'drag back anywhere to throw'
-        : 'drag back to throw  ·  or arrows + space  ·  esc to quit';
+        ? 'drag back to throw  ·  arc it to curve'
+        : 'drag back to throw  ·  arc the drag to curve  ·  esc to quit';
       ctx.fillText(hint, W / 2, H - 28);
     }
     ctx.globalAlpha = 1;
