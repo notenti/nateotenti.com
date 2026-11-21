@@ -5,7 +5,12 @@
 @layer base {
   html {
     @apply antialiased;
-    scrollbar-gutter: stable;
+  }
+
+  @media (min-width: 640px) {
+    html {
+      scrollbar-gutter: stable;
+    }
   }
 
   body {
