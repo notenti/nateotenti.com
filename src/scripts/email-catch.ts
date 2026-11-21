@@ -1,8 +1,9 @@
 // Email catch: click "email" three times and the copy icon becomes a catcher.
 // The letters of the address come loose from the page (a matching letter
 // wiggles, then drops), mixed with decoys. Catch them in order to spell the
-// address; a wrong catch knocks the last letter back off. Spell it and the
-// address is copied, then everything flies home.
+// address in the row under the catcher. Caught letters stay; a wrong catch
+// just stuns the catcher for a moment. Spell it and the address is copied,
+// then everything flies home.
 
 import {
   INK,
@@ -82,6 +83,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
     flash: 0,
     flashColor: GREEN,
     shake: 0,
+    stun: 0, // after a wrong catch: can't catch for a moment
   };
 
   // --- State --------------------------------------------------------------
@@ -109,7 +111,8 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
   const SLOT_FONT = `500 ${W < 400 ? 15 : 17}px ${MONO}`;
   ctx.font = SLOT_FONT;
   const cw = ctx.measureText('m').width;
-  const slotY = 64;
+  // right under the catcher, so your eyes never leave the action
+  const slotY = CATCH_Y + 38;
   const slotX = (i: number) => W / 2 - (target.length * cw) / 2 + cw * (i + 0.5);
 
   // --- Spawning -----------------------------------------------------------
@@ -239,6 +242,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
 
   function tryCatch(p: Piece, prevY: number) {
     const top = CATCH_Y - 14;
+    if (catcher.stun > 0) return;
     if (prevY > top || p.y < top) return;
     if (Math.abs(p.x - catcher.x) > HALF + p.g.hw * 0.5) return;
     const need = target[spelled];
@@ -256,7 +260,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
       burst(p.x, top, GREEN, 5);
       if (spelled === target.length) finish();
     } else {
-      // wrong letter: it bounces off, and knocks the last caught one loose
+      // wrong letter: it bounces off and the catcher is dazed for a beat
       p.phase = 'bounce';
       p.vy = -300 * k;
       p.vx = (p.x < catcher.x ? -1 : 1) * rand(120, 200) * k;
@@ -264,26 +268,9 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
       catcher.shake = 1;
       catcher.flash = 1;
       catcher.flashColor = INK;
-      knockOff('oops');
+      catcher.stun = 0.6;
+      pop(catcher.x, CATCH_Y - 30, 'nope', MUTED, 11);
     }
-  }
-
-  /** Lose the last caught letter: it tumbles out of the address. */
-  function knockOff(label: string) {
-    if (spelled === 0) return;
-    spelled--;
-    const lost = caught[spelled];
-    caught[spelled] = null;
-    if (lost) {
-      lost.phase = 'bounce';
-      lost.x = slotX(spelled);
-      lost.y = slotY;
-      lost.vx = rand(-120, 120) * k;
-      lost.vy = -160 * k;
-      lost.va = rand(-6, 6);
-      lost.alpha = 1;
-    }
-    pop(slotX(spelled), slotY + 26, label, MUTED, 11);
   }
 
   // A page letter that falls off the bottom quietly reappears at home.
@@ -302,7 +289,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
     stateT = 0;
     doneFlash = 1;
     navigator.clipboard?.writeText(address).catch(() => {});
-    pop(W / 2, slotY + 30, 'copied.', GREEN, 13);
+    pop(W / 2, CATCH_Y - 34, 'copied.', GREEN, 13);
   }
 
   function end(done: boolean) {
@@ -346,11 +333,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
           p.a += p.va * dt * 0.4;
           if (p.x < 12 || p.x > W - 12) p.vx = -p.vx;
           if (state === 'play') tryCatch(p, prevY);
-          if (p.phase === 'fall' && p.y > H + 30) {
-            // let the one you needed get away and you lose your last letter
-            if (state === 'play' && p.ch === target[spelled]) knockOff('missed');
-            sendHome(p);
-          }
+          if (p.phase === 'fall' && p.y > H + 30) sendHome(p);
           break;
         case 'bounce':
           p.vy += 900 * k * dt;
@@ -363,7 +346,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
           if (p.from && p.t < FLY_TO_SLOT) {
             const e = easeInOutCubic(p.t / FLY_TO_SLOT);
             p.x = lerp(p.from.x, slotX(p.slot), e);
-            p.y = lerp(p.from.y, slotY, e) - Math.sin(Math.PI * e) * 30;
+            p.y = lerp(p.from.y, slotY, e) - Math.sin(Math.PI * e) * 18;
             p.a = lerp(p.from.a, 0, e);
           } else {
             p.x = slotX(p.slot);
@@ -454,7 +437,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
     ctx.rotate(clamp(catcher.vx / 4000, -0.12, 0.12));
     const sq = catcher.squash * 0.18;
     ctx.scale(catcher.scale * (1 + sq), catcher.scale * (1 - sq));
-    const col = catcher.flash > 0.05 ? catcher.flashColor : INK;
+    const col = catcher.stun > 0 ? MUTED : catcher.flash > 0.05 ? catcher.flashColor : INK;
     ctx.strokeStyle = col;
     ctx.lineWidth = 2;
     ctx.lineJoin = 'round';
@@ -570,7 +553,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
       ctx.fillText(
         coarse ? 'catch them in order  ·  drag to move' : 'catch them in order  ·  esc to quit',
         W / 2,
-        H - 28
+        H - 12
       );
     }
     ctx.globalAlpha = 1;
@@ -590,6 +573,7 @@ export function startEmailCatch(button: HTMLElement, address: string, onEnd: (do
     catcher.squash = Math.max(0, catcher.squash - dt * 7);
     catcher.flash = Math.max(0, catcher.flash - dt * 3);
     catcher.shake = Math.max(0, catcher.shake - dt * 4);
+    catcher.stun = Math.max(0, catcher.stun - dt);
     doneFlash = Math.max(0, doneFlash - dt * 0.8);
 
     if (state === 'play') {
