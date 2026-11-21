@@ -5,14 +5,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Nate Otenti">
   <main class="min-h-svh flex items-center justify-center px-6 py-16 sm:p-8">
     <div class="max-w-2xl min-w-0 sm:p-8">
-      <h1 data-game-text class="text-4xl sm:text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
+      <h1 data-game-text data-hole="3" class="text-4xl sm:text-5xl md:text-6xl font-bold text-stone-900 mb-6 tracking-tight">
         Hi, I'm Nate<span id="game-dot" data-game-skip role="button" tabindex="0" aria-label="Play a game" class="game-dot">.</span>
       </h1>
-      <p data-game-text class="text-xl sm:text-2xl md:text-3xl text-stone-700 mb-10 font-medium tracking-tight">
+      <p data-game-text data-hole="2" class="text-xl sm:text-2xl md:text-3xl text-stone-700 mb-10 font-medium tracking-tight">
         I'm a software engineer working at <a href="https://www.nvidia.com/" class="text-nvidia hover:underline">NVIDIA</a>.
       </p>
-      <p data-game-text class="text-lg text-stone-600 leading-relaxed mb-14 max-w-xl">
-        When I'm not flipping bits, I'm usually making pizza, playing disc golf,
+      <p data-game-text data-hole="1" class="text-lg text-stone-600 leading-relaxed mb-14 max-w-xl">
+        When I'm not flipping bits, I'm usually making pizza, playing <span id="disc-golf" role="button" tabindex="0" aria-label="Play disc golf" class="disc-phrase">disc golf</span>,
         practicing yoga, or working in the garden. I live outside of Boston, MA with my wife and our lovely standard poodle.
       </p>
 
@@ -153,6 +153,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transform: translateY(-3px) scale(1.25);
   }
 
+  .disc-phrase {
+    display: inline-block;
+    cursor: grab;
+    touch-action: none;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .disc-phrase:hover,
+  .disc-phrase:focus-visible {
+    transform: rotate(-3deg);
+    outline: none;
+  }
+  .disc-phrase[data-playing] {
+    transform: none;
+    transition: none;
+  }
   .game-dot[data-playing] {
     color: inherit;
     transform: none;
@@ -264,6 +279,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <script>
   const gameDot = document.getElementById('game-dot') as HTMLElement;
+  // Only one hidden game runs at a time.
   let playing = false;
   const loadGame = () => import('../scripts/keepy-up');
 
@@ -276,6 +292,41 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       playing = false;
     });
   }
+
+  // Disc golf: drag (or click) the words "disc golf".
+  const discPhrase = document.getElementById('disc-golf') as HTMLElement;
+  const loadDiscGolf = () => import('../scripts/disc-golf');
+  async function launchDiscGolf() {
+    if (playing) return;
+    playing = true;
+    discPhrase.blur();
+    const { startDiscGolf } = await loadDiscGolf();
+    startDiscGolf(discPhrase, () => {
+      playing = false;
+    });
+  }
+  let discDown: { x: number; y: number } | null = null;
+  discPhrase.addEventListener('pointerenter', loadDiscGolf, { once: true });
+  discPhrase.addEventListener('focus', loadDiscGolf, { once: true });
+  discPhrase.addEventListener('pointerdown', (e) => {
+    loadDiscGolf();
+    discDown = { x: e.clientX, y: e.clientY };
+  });
+  discPhrase.addEventListener('pointermove', (e) => {
+    if (!discDown) return;
+    if (Math.hypot(e.clientX - discDown.x, e.clientY - discDown.y) > 6) {
+      discDown = null;
+      launchDiscGolf();
+    }
+  });
+  window.addEventListener('pointerup', () => (discDown = null));
+  discPhrase.addEventListener('click', launchDiscGolf);
+  discPhrase.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      launchDiscGolf();
+    }
+  });
 
   gameDot.addEventListener('pointerenter', loadGame, { once: true });
   gameDot.addEventListener('focus', loadGame, { once: true });
