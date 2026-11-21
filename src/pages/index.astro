@@ -341,25 +341,57 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const toast = document.getElementById('copy-toast') as HTMLSpanElement;
 
-  btn.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(btn.dataset.email!);
+  // Click "email" three times quickly and the copy icon turns into a
+  // catcher for the letters of the address.
+  const loadEmailCatch = () => import('../scripts/email-catch');
+  btn.addEventListener('pointerenter', () => loadEmailCatch(), { once: true });
+  let clicks = 0;
+  let lastClick = 0;
+  let toastTimer = 0;
 
+  function showToast(text: string, ms = 1500) {
+    toast.textContent = text;
     toast.style.opacity = '1';
     toast.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(0.5rem)';
+    }, ms);
+  }
+
+  btn.addEventListener('click', async () => {
+    const now = performance.now();
+    clicks = now - lastClick < 700 ? clicks + 1 : 1;
+    lastClick = now;
+
+    navigator.clipboard.writeText(btn.dataset.email!).catch(() => {});
 
     btn.animate(
       [
         { transform: 'scale(1)' },
-        { transform: 'scale(1.2)' },
+        { transform: `scale(${1.2 + 0.1 * (clicks - 1)})` },
         { transform: 'scale(1)' },
       ],
       { duration: 300, easing: 'ease-out' }
     );
 
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(-50%) translateY(0.5rem)';
-    }, 1500);
+    if (clicks < 3 || playing) {
+      showToast(clicks === 2 ? 'copied!!' : 'copied!');
+      return;
+    }
+    clicks = 0;
+    playing = true;
+    showToast('ok, catch.', 900);
+    btn.blur();
+    const [{ startEmailCatch }] = await Promise.all([
+      loadEmailCatch(),
+      new Promise((r) => setTimeout(r, 450)),
+    ]);
+    startEmailCatch(btn, btn.dataset.email!, (done) => {
+      playing = false;
+      if (done) showToast('copied.');
+    });
   });
 
   const toggleBtn = document.getElementById('toggle-journey') as HTMLButtonElement;
