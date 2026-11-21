@@ -173,16 +173,10 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     ang: 0,
     power: 0,
     curve: 0, // -1 bends left, +1 bends right
-    restPower: 0.5, // what the preview shows before you pull
-    restAng: 0,
-    mode: 'pull' as 'pull' | 'knob',
     ptr: -1,
-    touchedKnob: false,
+    path: [] as { x: number; y: number }[],
+    restAng: 0,
   };
-  // The bend knob rides the preview path; geometry is refreshed every frame.
-  const knob = { x: 0, y: 0, scale: 1, visible: false, hover: false };
-  const KNOB_HIT = coarse ? 30 : 16;
-  let wiggleT = -1;
   const endFrom = { x: 0, y: 0 };
   let hudAlpha = 0;
   let hintAlpha = 0;
@@ -206,8 +200,7 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     basket.rattle = 0;
     throws = 0;
     aim.ang = Math.atan2(h.y - disc.y, h.x - disc.x);
-    aim.power = aim.restPower;
-    aim.curve = 0;
+    aim.power = 0.5;
   }
 
   // --- Intro --------------------------------------------------------------
@@ -245,76 +238,75 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
   }
 
   // --- Input --------------------------------------------------------------
-  // Grab the knob on the path and slide it sideways to bend the shot; pull
-  // back from anywhere else to throw.
   const onPointerDown = (e: PointerEvent) => {
     e.preventDefault();
     if (state !== 'aim' || aim.active) return;
     aim.active = true;
     aim.keyboard = false;
     aim.ptr = e.pointerId;
-    canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = 'grabbing';
-    if (knob.visible && Math.hypot(e.clientX - knob.x, e.clientY - knob.y) < KNOB_HIT) {
-      aim.mode = 'knob';
-      aim.touchedKnob = true;
-      // remember where on the knob it was grabbed, so it doesn't jump
-      aim.px = e.clientX - knob.x;
-      aim.py = e.clientY - knob.y;
-      return;
-    }
-    aim.mode = 'pull';
     aim.px = e.clientX;
     aim.py = e.clientY;
-    aim.restAng = aim.ang;
     aim.power = 0;
+    aim.curve = 0;
+    aim.restAng = aim.ang;
+    aim.path = [{ x: e.clientX, y: e.clientY }];
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = 'grabbing';
   };
   const onPointerMove = (e: PointerEvent) => {
-    if (!aim.active) {
-      const over = knob.visible && Math.hypot(e.clientX - knob.x, e.clientY - knob.y) < KNOB_HIT;
-      if (over !== knob.hover) {
-        knob.hover = over;
-        canvas.style.cursor = over ? 'grab' : 'crosshair';
-      }
-      return;
-    }
-    if (e.pointerId !== aim.ptr) return;
-    if (aim.mode === 'knob') {
-      // The knob follows the finger sideways: find the curve that puts the
-      // knob's point of the path that far off the straight line.
-      const ux = Math.cos(aim.ang);
-      const uy = Math.sin(aim.ang);
-      const px = e.clientX - aim.px;
-      const py = e.clientY - aim.py;
-      const dev = ux * (py - disc.y) - uy * (px - disc.x);
-      // measured from where the knob sits with no bend (the natural fade
-      // already pulls it a little off the line)
-      const d0 = knobDeviation(0);
-      const c = dev >= d0 ? (dev - d0) / Math.max(4, knobDeviation(1) - d0) : -(d0 - dev) / Math.max(4, d0 - knobDeviation(-1));
-      aim.curve = clamp(c, -1, 1);
-      if (Math.abs(aim.curve) < 0.06) aim.curve = 0;
-      return;
-    }
+    if (!aim.active || e.pointerId !== aim.ptr) return;
     // slingshot: drag back, the disc goes the other way
     const dx = aim.px - e.clientX;
     const dy = aim.py - e.clientY;
     const len = Math.hypot(dx, dy);
     aim.power = clamp(len / PULL_MAX, 0, 1);
     if (len > 4) aim.ang = Math.atan2(dy, dx);
+    // slide back to where you started to wipe the bend and redraw it
+    if (len < 14) aim.path.length = 1;
+    else aim.path.push({ x: e.clientX, y: e.clientY });
+    aim.curve = curveOfDrag(aim.path);
   };
+
+  // Shape the shot by pulling back in an arc: the throw bends the way the
+  // drag bends. Measured as how far the halfway point of the drag sits off
+  // the straight line from start to finish.
+  function curveOfDrag(path: { x: number; y: number }[]) {
+    const a = path[0];
+    const b = path[path.length - 1];
+    const cx = b.x - a.x;
+    const cy = b.y - a.y;
+    const L = Math.hypot(cx, cy);
+    if (L < 30 || path.length < 3) return 0;
+    let total = 0;
+    for (let i = 1; i < path.length; i++) total += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+    let acc = 0;
+    let m = a;
+    for (let i = 1; i < path.length; i++) {
+      const seg = Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+      if (acc + seg >= total / 2) {
+        const k = seg ? (total / 2 - acc) / seg : 0;
+        m = { x: lerp(path[i - 1].x, path[i].x, k), y: lerp(path[i - 1].y, path[i].y, k) };
+        break;
+      }
+      acc += seg;
+    }
+    // y is down, so a positive cross product means right of the drag
+    const dev = (cx * (m.y - a.y) - cy * (m.x - a.x)) / L;
+    const ratio = dev / L;
+    const mag = clamp((Math.abs(ratio) - 0.04) / 0.26, 0, 1);
+    return Math.sign(ratio) * mag;
+  }
   const onPointerUp = (e: PointerEvent) => {
     if (!aim.active || e.pointerId !== aim.ptr) return;
     aim.active = false;
     canvas.style.cursor = 'crosshair';
-    knob.hover = false;
-    if (aim.mode === 'knob') return;
     if (aim.power < 0.06) {
       // a tap or a tiny tug: put the aim back the way it was
-      aim.power = aim.restPower;
+      aim.power = 0;
+      aim.curve = 0;
       aim.ang = aim.restAng;
       return;
     }
-    aim.restPower = aim.power;
     release();
   };
 
@@ -326,17 +318,15 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
       e.preventDefault();
       aim.active = true;
       aim.keyboard = true;
-      if (e.shiftKey) aim.touchedKnob = true;
       if (k === 'ArrowLeft' && e.shiftKey) aim.curve = clamp(aim.curve - 0.1, -1, 1);
       else if (k === 'ArrowLeft') aim.ang -= 0.06;
       if (k === 'ArrowRight' && e.shiftKey) aim.curve = clamp(aim.curve + 0.1, -1, 1);
       else if (k === 'ArrowRight') aim.ang += 0.06;
       if (k === 'ArrowUp') aim.power = clamp(aim.power + 0.05, 0.05, 1);
       if (k === 'ArrowDown') aim.power = clamp(aim.power - 0.05, 0.05, 1);
-    } else if (k === ' ' || k === 'Enter') {
+    } else if ((k === ' ' || k === 'Enter') && aim.active) {
       e.preventDefault();
       aim.active = false;
-      aim.restPower = aim.power;
       release();
     }
   };
@@ -423,37 +413,6 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     return pts;
   }
 
-  /** Arc length along the path to the knob, and the points shown. */
-  function previewPath(curve: number) {
-    const pts = predict(aim.ang, Math.max(aim.power, 0.06), curve);
-    let total = 0;
-    for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-    const show = Math.max(48, total * 0.55);
-    return { pts, show, knobAt: Math.max(DISC_R + 26, show * 0.8) };
-  }
-
-  function pointAt(pts: { x: number; y: number }[], dist: number) {
-    let acc = 0;
-    for (let i = 1; i < pts.length; i++) {
-      const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-      if (acc + seg >= dist) {
-        const k = seg ? (dist - acc) / seg : 0;
-        return { x: lerp(pts[i - 1].x, pts[i].x, k), y: lerp(pts[i - 1].y, pts[i].y, k) };
-      }
-      acc += seg;
-    }
-    return pts[pts.length - 1];
-  }
-
-  /** Signed distance of the knob off the straight aim line (right = +). */
-  function knobDeviation(curve: number) {
-    const { pts, knobAt } = previewPath(curve);
-    const p = pointAt(pts, knobAt);
-    const ux = Math.cos(aim.ang);
-    const uy = Math.sin(aim.ang);
-    return ux * (p.y - disc.y) - uy * (p.x - disc.x);
-  }
-
   function stepFlight(dt: number) {
     const p = clamp(Math.hypot(disc.vx, disc.vy) / disc.s0, 0, 1);
     const s = fly(disc, dt);
@@ -517,8 +476,6 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
         return sink(true);
       }
       aim.ang = Math.atan2(h.y - disc.y, h.x - disc.x);
-      aim.power = aim.restPower;
-      aim.curve = 0;
       setState('aim');
     }
   }
@@ -735,87 +692,80 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     }
     ctx.globalAlpha = 1;
 
-    // aim guide: the first stretch of the predicted (open-air) flight with
-    // the bend knob riding on it
-    knob.visible = false;
-    if (state === 'aim') {
-      // a little wiggle the first time, so the knob reads as grabbable
-      const wig =
-        wiggleT >= 0 && !aim.touchedKnob && !aim.active ? 0.45 * Math.sin(wiggleT * 9) * Math.exp(-wiggleT * 2.2) : 0;
-      const shownCurve = clamp(aim.curve + wig, -1, 1);
-      const { pts, show, knobAt } = previewPath(shownCurve);
-      const pulling = aim.active && aim.mode === 'pull';
-      const green = pulling && aim.power > 0.97;
-      const fadeIn = clamp(stateT / 0.25, 0, 1);
+    // aim guide: the first stretch of the predicted (open-air) flight, so
+    // you can see the shape without being handed the landing spot
+    if (state === 'aim' && (aim.active || aim.keyboard) && aim.power > 0.02) {
+      const pts = predict(aim.ang, aim.power, aim.curve);
+      let total = 0;
+      for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      const show = Math.max(40, total * 0.55);
+      const green = aim.power > 0.97;
 
-      // straight reference while bending, so you can see how much
-      if (aim.curve !== 0 || (aim.active && aim.mode === 'knob')) {
-        ctx.globalAlpha = 0.14 * fadeIn;
-        ctx.strokeStyle = INK;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 5]);
+      // the band you're pulling: stretches back from the disc to a handle,
+      // bowed by exactly the bend the throw will get
+      if (aim.active && !aim.keyboard) {
+        let L = Math.min(Math.hypot(aim.path[aim.path.length - 1].x - aim.px, aim.path[aim.path.length - 1].y - aim.py), PULL_MAX * 1.1);
+        const bx = -Math.cos(aim.ang);
+        const by = -Math.sin(aim.ang);
+        // keep the handle on screen when the disc sits near an edge
+        const m = 10;
+        let fit = L;
+        if (bx > 0) fit = Math.min(fit, (W - m - disc.x) / bx);
+        if (bx < 0) fit = Math.min(fit, (m - disc.x) / bx);
+        if (by > 0) fit = Math.min(fit, (H - m - disc.y) / by);
+        if (by < 0) fit = Math.min(fit, (m - disc.y) / by);
+        L = Math.max(DISC_R + 12, fit);
+        const ex = disc.x + bx * L;
+        const ey = disc.y + by * L;
+        const ratio = aim.curve === 0 ? 0 : Math.sign(aim.curve) * (0.04 + 0.26 * Math.abs(aim.curve));
+        // right-hand normal of the band's direction (y is down)
+        const nx = -by;
+        const ny = bx;
+        const off = 2 * ratio * L; // a quadratic's control sits twice as far out as its midpoint
+        const qx = (disc.x + ex) / 2 + nx * off;
+        const qy = (disc.y + ey) / 2 + ny * off;
+        ctx.globalAlpha = 0.45;
+        ctx.strokeStyle = green ? GREEN : aim.curve !== 0 ? GREEN : INK;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(disc.x, disc.y);
-        ctx.lineTo(disc.x + Math.cos(aim.ang) * knobAt, disc.y + Math.sin(aim.ang) * knobAt);
+        ctx.quadraticCurveTo(qx, qy, ex, ey);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#fafaf9';
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(ex, ey, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       }
 
       ctx.fillStyle = green ? GREEN : INK;
-      for (let d = DISC_R + 8; d < show; d += 9) {
-        if (Math.abs(d - knobAt) < 10) continue;
-        const p = pointAt(pts, d);
-        ctx.globalAlpha = 0.5 * (1 - (d / show) * 0.85) * fadeIn;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // the knob
-      const kp = pointAt(pts, knobAt);
-      knob.x = kp.x;
-      knob.y = kp.y;
-      knob.visible = !pulling && fadeIn > 0.5;
-      const target = aim.active && aim.mode === 'knob' ? 1.3 : knob.hover ? 1.15 : 1;
-      knob.scale = lerp(knob.scale, target, 0.35);
-      const kp2 = pointAt(pts, knobAt + 2);
-      const ta = Math.atan2(kp2.y - kp.y, kp2.x - kp.x);
-      ctx.save();
-      ctx.translate(kp.x, kp.y);
-      ctx.rotate(ta);
-      ctx.scale(knob.scale, knob.scale);
-      ctx.globalAlpha = (pulling ? 0.35 : 1) * fadeIn;
-      // side chevrons: slide me this way
-      if (!pulling) {
-        ctx.strokeStyle = MUTED;
-        ctx.lineWidth = 1.2;
-        ctx.lineCap = 'round';
-        for (const side of [-1, 1]) {
+      let acc = 0;
+      let next = DISC_R + 8;
+      for (let i = 1; i < pts.length && acc < show; i++) {
+        const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        while (next <= acc + seg && next < show) {
+          const k = (next - acc) / seg;
+          const x = lerp(pts[i - 1].x, pts[i].x, k);
+          const y = lerp(pts[i - 1].y, pts[i].y, k);
+          const f = next / show;
+          ctx.globalAlpha = 0.55 * (1 - f * 0.85);
           ctx.beginPath();
-          ctx.moveTo(-2.5, side * 10);
-          ctx.lineTo(0, side * 12.5);
-          ctx.lineTo(2.5, side * 10);
-          ctx.stroke();
+          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+          next += 9;
         }
+        acc += seg;
       }
-      const r = coarse ? 6.5 : 5.5;
-      ctx.fillStyle = '#fafaf9';
-      ctx.strokeStyle = aim.curve !== 0 ? GREEN : INK;
-      ctx.lineWidth = 1.6;
+      ctx.globalAlpha = 0.35;
+      ctx.strokeStyle = green ? GREEN : INK;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(disc.x, disc.y, DISC_R + 4 + 10 * (1 - aim.power), 0, Math.PI * 2);
       ctx.stroke();
-      ctx.restore();
-
-      if (pulling) {
-        ctx.globalAlpha = 0.35;
-        ctx.strokeStyle = green ? GREEN : INK;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(disc.x, disc.y, DISC_R + 4 + 10 * (1 - aim.power), 0, Math.PI * 2);
-        ctx.stroke();
-      }
       ctx.globalAlpha = 1;
     }
 
@@ -838,7 +788,7 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
       }
       let ox = 0;
       let oy = 0;
-      if (state === 'aim' && aim.active && aim.mode === 'pull') {
+      if (state === 'aim' && aim.active) {
         // wind up: the disc draws back a touch with the pull
         ox = -Math.cos(aim.ang) * aim.power * 5;
         oy = -Math.sin(aim.ang) * aim.power * 5;
@@ -887,8 +837,8 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
       ctx.textAlign = 'center';
       ctx.fillStyle = MUTED;
       const hint = coarse
-        ? 'slide the knob to curve  ·  pull back to throw'
-        : 'slide the knob to curve  ·  pull back to throw  ·  esc to quit';
+        ? 'pull back to throw  ·  bend the pull to curve'
+        : 'pull back to throw  ·  bend the pull to curve  ·  esc to quit';
       ctx.fillText(hint, W / 2, H - 28);
     }
     ctx.globalAlpha = 1;
@@ -915,8 +865,6 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     basket.rattle = Math.max(0, basket.rattle - dt * 1.6);
     disc.sq = Math.max(0, disc.sq - dt * 9);
 
-    if (state === 'aim' && !thrown && wiggleT < 0 && stateT > 0.5) wiggleT = 0;
-    if (wiggleT >= 0) wiggleT += dt;
     if (state === 'intro') stepIntro(dt);
     else if (state === 'flight') {
       const steps = Math.ceil(dt * 240);
