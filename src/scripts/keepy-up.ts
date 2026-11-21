@@ -2,7 +2,23 @@
 // upward; every letter it hits breaks loose and scores. Three floor touches
 // and the page reassembles itself.
 
-type Box = { l: number; t: number; r: number; b: number };
+import {
+  INK,
+  GREEN,
+  MUTED,
+  MONO,
+  rand,
+  clamp,
+  lerp,
+  easeOutBack,
+  easeInOutCubic,
+  wrapAngle,
+  createOverlay,
+  collectGlyphs,
+  drawGlyph,
+  circleBox,
+  type Glyph,
+} from './game-kit';
 
 interface Word {
   text: string;
@@ -10,20 +26,7 @@ interface Word {
   remaining: number;
 }
 
-interface Letter {
-  el: HTMLElement | SVGElement;
-  img?: HTMLImageElement;
-  ch: string;
-  font: string;
-  color: string;
-  // home pivot (ink center) and draw offset from pivot to baseline-left
-  hx: number;
-  hy: number;
-  ox: number;
-  oy: number;
-  hw: number;
-  hh: number;
-  box: Box;
+interface Letter extends Omit<Glyph, 'word'> {
   heavy: boolean;
   pts: number;
   order: number;
@@ -46,11 +49,6 @@ interface Ring { x: number; y: number; r0: number; r1: number; t: number; life: 
 interface Pop { x: number; y: number; text: string; color: string; size: number; t: number; life: number }
 interface FloorFlash { x: number; t: number; life: number }
 
-const INK = '#1c1917';
-const GREEN = '#76b900';
-const MUTED = '#a8a29e';
-const MONO = '"JetBrains Mono", ui-monospace, monospace';
-
 const GRAVITY = 1700;
 const BALL_R = 10;
 const MAX_SPEED = 1900;
@@ -59,214 +57,43 @@ const SQUASH_DUR = 0.09;
 const LIVES = 3;
 const RETURN_DUR = 0.55;
 
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const easeOutBack = (t: number, s = 1.6) => 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
-const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
-
-function splitText(roots: Element[]) {
-  const wrappers: HTMLSpanElement[] = [];
-  const words: { word: Word; spans: HTMLSpanElement[] }[] = [];
-
-  for (const root of roots) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) =>
-        n.parentElement?.closest('[data-game-skip]') || !n.nodeValue?.trim()
-          ? NodeFilter.FILTER_REJECT
-          : NodeFilter.FILTER_ACCEPT,
-    });
-    const nodes: Text[] = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode as Text);
-
-    for (const node of nodes) {
-      const frag = document.createDocumentFragment();
-      for (const part of node.nodeValue!.split(/(\s+)/)) {
-        if (!part) continue;
-        if (/^\s+$/.test(part)) {
-          frag.append(document.createTextNode(part));
-          continue;
-        }
-        const w = document.createElement('span');
-        const spans: HTMLSpanElement[] = [];
-        for (const ch of Array.from(part)) {
-          const c = document.createElement('span');
-          c.textContent = ch;
-          w.append(c);
-          spans.push(c);
-        }
-        frag.append(w);
-        wrappers.push(w);
-        words.push({ word: { text: part, letters: [], remaining: 0 }, spans });
-      }
-      node.replaceWith(frag);
-    }
-  }
-
-  const restore = () => {
-    const parents = new Set<Node>();
-    for (const w of wrappers) {
-      if (!w.parentNode) continue;
-      parents.add(w.parentNode);
-      w.replaceWith(document.createTextNode(w.textContent ?? ''));
-    }
-    parents.forEach((p) => p.normalize());
-  };
-
-  return { words, restore };
-}
-
 export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const overlay = createOverlay();
+  const { canvas, ctx, W, H, coarse } = overlay;
   const KICK_R = coarse ? 150 : 120;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.setAttribute('aria-hidden', 'true');
-  Object.assign(canvas.style, {
-    position: 'fixed',
-    left: '0',
-    top: '0',
-    width: `${W}px`,
-    height: `${H}px`,
-    zIndex: '60',
-    touchAction: 'none',
-    cursor: 'pointer',
-  });
-  const ctx = canvas.getContext('2d')!;
+  canvas.style.cursor = 'pointer';
 
   // --- Letters ------------------------------------------------------------
-  const roots = Array.from(document.querySelectorAll('[data-game-text]'));
-  const { words, restore } = splitText(roots);
-  const letters: Letter[] = [];
-  const metricsCache = new Map<string, TextMetrics>();
-  const measure = (font: string, ch: string) => {
-    const key = font + '|' + ch;
-    let m = metricsCache.get(key);
-    if (!m) {
-      ctx.font = font;
-      m = ctx.measureText(ch);
-      metricsCache.set(key, m);
+  const collected = collectGlyphs(ctx, H);
+  const { measure, restore } = collected;
+  const wordOf = new Map<Glyph['word'], Word>();
+  const letters: Letter[] = collected.glyphs.map((g, i) => {
+    let word = wordOf.get(g.word);
+    if (!word) {
+      word = { text: g.word.text, letters: [], remaining: 0 };
+      wordOf.set(g.word, word);
     }
-    return m;
-  };
-  const baselineOf = (rect: DOMRect, m: TextMetrics) => {
-    const A = m.fontBoundingBoxAscent;
-    const D = m.fontBoundingBoxDescent;
-    return rect.top + (rect.height - (A + D)) / 2 + A;
-  };
-
-  for (const { word, spans } of words) {
-    for (const span of spans) {
-      const rect = span.getBoundingClientRect();
-      if (rect.width === 0 || rect.bottom < 0 || rect.top > H) continue;
-      const cs = getComputedStyle(span);
-      const size = parseFloat(cs.fontSize);
-      const font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      const ch = span.textContent!;
-      const m = measure(font, ch);
-      const base = baselineOf(rect, m);
-      const box: Box = {
-        l: rect.left - m.actualBoundingBoxLeft,
-        r: rect.left + m.actualBoundingBoxRight,
-        t: base - m.actualBoundingBoxAscent,
-        b: base + m.actualBoundingBoxDescent,
-      };
-      if (box.r - box.l < 1 || box.b - box.t < 1) continue;
-      const hx = (box.l + box.r) / 2;
-      const hy = (box.t + box.b) / 2;
-      const L: Letter = {
-        el: span,
-        ch,
-        font,
-        color: cs.color,
-        hx,
-        hy,
-        ox: rect.left - hx,
-        oy: base - hy,
-        hw: (box.r - box.l) / 2,
-        hh: (box.b - box.t) / 2,
-        box,
-        heavy: size >= 32,
-        pts: size >= 40 ? 5 : size >= 24 ? 3 : 1,
-        order: 0,
-        word,
-        alive: true,
-        x: hx,
-        y: hy,
-        vx: 0,
-        vy: 0,
-        a: 0,
-        va: 0,
-        alpha: 1,
-        settled: false,
-      };
-      word.letters.push(L);
-      word.remaining++;
-      letters.push(L);
-    }
-  }
-
-  // Inline SVG icons (nav arrows, chevron, copy icon) break loose too.
-  for (const root of roots) {
-    for (const svg of Array.from(root.querySelectorAll('svg'))) {
-      if (svg.closest('[data-game-skip]')) continue;
-      const rect = svg.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0 || rect.bottom < 0 || rect.top > H) continue;
-      const color = getComputedStyle(svg).color;
-      const clone = svg.cloneNode(true) as SVGElement;
-      for (const a of ['class', 'style', 'id']) clone.removeAttribute(a);
-      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      clone.setAttribute('width', String(rect.width));
-      clone.setAttribute('height', String(rect.height));
-      const img = new Image();
-      img.src =
-        'data:image/svg+xml;charset=utf-8,' +
-        encodeURIComponent(clone.outerHTML.replaceAll('currentColor', color));
-      const hw = rect.width / 2;
-      const hh = rect.height / 2;
-      const pad = 3; // tiny targets get a little forgiveness
-      const word: Word = { text: '', letters: [], remaining: 1 };
-      const L: Letter = {
-        el: svg,
-        img,
-        ch: '',
-        font: '',
-        color,
-        hx: rect.left + hw,
-        hy: rect.top + hh,
-        ox: -hw,
-        oy: -hh,
-        hw,
-        hh,
-        box: { l: rect.left - pad, r: rect.right + pad, t: rect.top - pad, b: rect.bottom + pad },
-        heavy: false,
-        pts: 2,
-        order: 0,
-        word,
-        alive: true,
-        x: rect.left + hw,
-        y: rect.top + hh,
-        vx: 0,
-        vy: 0,
-        a: 0,
-        va: 0,
-        alpha: 1,
-        settled: false,
-      };
-      word.letters.push(L);
-      letters.push(L);
-    }
-  }
-  letters.sort((a, b) =>
-    a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
-  );
-  letters.forEach((l, i) => (l.order = i));
+    const isIcon = !!g.img;
+    const L: Letter = {
+      ...g,
+      heavy: !isIcon && g.size >= 32,
+      pts: isIcon ? 2 : g.size >= 40 ? 5 : g.size >= 24 ? 3 : 1,
+      order: i,
+      word,
+      alive: true,
+      x: g.hx,
+      y: g.hy,
+      vx: 0,
+      vy: 0,
+      a: 0,
+      va: 0,
+      alpha: 1,
+      settled: false,
+    };
+    word.letters.push(L);
+    word.remaining++;
+    return L;
+  });
 
   // --- The period ---------------------------------------------------------
   // Freeze the hover lift/scale/color so we measure (and later hand back to)
@@ -469,35 +296,14 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
   }
 
   function collide() {
-    const r = ball.r;
     for (const L of letters) {
       if (!L.alive) continue;
-      const b = L.box;
-      if (ball.x + r < b.l || ball.x - r > b.r || ball.y + r < b.t || ball.y - r > b.b) continue;
-      const cx = clamp(ball.x, b.l, b.r);
-      const cy = clamp(ball.y, b.t, b.b);
-      let dx = ball.x - cx;
-      let dy = ball.y - cy;
-      const d2 = dx * dx + dy * dy;
-      if (d2 > r * r) continue;
-
+      const hit = circleBox(ball.x, ball.y, ball.r, L.box);
+      if (!hit) continue;
       if (L.heavy) {
-        let nx: number, ny: number, push: number;
-        if (d2 > 1e-6) {
-          const d = Math.sqrt(d2);
-          nx = dx / d;
-          ny = dy / d;
-          push = r - d;
-        } else {
-          const pl = ball.x - b.l, pr = b.r - ball.x, pt = ball.y - b.t, pb = b.b - ball.y;
-          const m = Math.min(pl, pr, pt, pb);
-          nx = m === pl ? -1 : m === pr ? 1 : 0;
-          ny = m === pt ? -1 : m === pb ? 1 : 0;
-          if (nx !== 0) ny = 0;
-          push = m + r;
-        }
-        ball.x += nx * push;
-        ball.y += ny * push;
+        const { nx, ny, depth } = hit;
+        ball.x += nx * depth;
+        ball.y += ny * depth;
         const vn = ball.vx * nx + ball.vy * ny;
         if (vn < 0) {
           ball.vx -= 1.7 * vn * nx;
@@ -690,8 +496,7 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
 
   // --- Render -------------------------------------------------------------
   function render() {
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
+    overlay.clear();
 
     // floor flashes
     for (const f of flashes) {
@@ -704,23 +509,7 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
     ctx.globalAlpha = 1;
 
     // debris letters
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-    for (const L of letters) {
-      if (L.alive) continue;
-      ctx.save();
-      ctx.globalAlpha = L.alpha;
-      ctx.translate(L.x, L.y);
-      ctx.rotate(L.a);
-      if (L.img) {
-        if (L.img.complete) ctx.drawImage(L.img, L.ox, L.oy, L.hw * 2, L.hh * 2);
-      } else {
-        ctx.font = L.font;
-        ctx.fillStyle = L.color;
-        ctx.fillText(L.ch, L.ox, L.oy);
-      }
-      ctx.restore();
-    }
+    for (const L of letters) if (!L.alive) drawGlyph(ctx, L, L.x, L.y, L.a, L.alpha);
 
     // particles
     for (const p of particles) {
@@ -930,8 +719,7 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
     canvas.removeEventListener('pointerdown', onPointerDown);
     window.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', onResize);
-    canvas.remove();
-    document.documentElement.style.overflow = prevOverflow;
+    overlay.unmount();
     for (const L of letters) L.el.style.visibility = '';
     restore();
     dot.style.visibility = '';
@@ -947,9 +735,7 @@ export function startKeepyUp(dot: HTMLElement, onEnd: () => void) {
     onEnd();
   }
 
-  const prevOverflow = document.documentElement.style.overflow;
-  document.documentElement.style.overflow = 'hidden';
-  document.body.append(canvas);
+  overlay.mount();
   canvas.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('keydown', onKey);
   window.addEventListener('resize', onResize);
