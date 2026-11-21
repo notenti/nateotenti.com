@@ -50,14 +50,17 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
 
   // World scale so a phone flies like a desktop, just smaller.
   const k = clamp(Math.hypot(W, H) / 1250, 0.6, 1.3);
-  const G = 620 * k; // pull along the slope
-  const DRAG = 0.0011 / k; // per v^2
-  const V0 = 430 * k;
-  const V_STALL = 115 * k;
-  const PITCH_UP = 1.7; // rad/s while held
-  const PITCH_DOWN = 1.5; // rad/s once released
-  const MAX_PITCH = 1.25; // steepest dive
-  const MAX_CLIMB = 0.85; // steepest climb
+  // Speed settles toward a cruise speed that rises in a dive and falls in a
+  // climb, but never below flying speed, so holding always climbs. Extra
+  // speed from a dive bleeds off slowly, so dive-then-pull-up zooms high.
+  const V0 = 400 * k;
+  const V_CRUISE = 400 * k;
+  const DIVE_GAIN = 320 * k; // speed added per sin(pitch)
+  const PITCH_UP = 1.9; // rad/s while held
+  const PITCH_DOWN = 1.3; // rad/s once released
+  const MAX_PITCH = 1.1; // steepest dive
+  const MAX_CLIMB = 0.9; // steepest climb
+  const STALL_AFTER = 1.6; // seconds of steep climbing before it stalls
   const FLOOR = H - 26;
 
   // --- Course -------------------------------------------------------------
@@ -93,6 +96,7 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
   let hudAlpha = 0;
   let hintAlpha = 0;
   let crumple = 0;
+  let climbT = 0;
 
   const pop = (x: number, y: number, text: string, color = INK, size = 13) =>
     pops.push({ x, y, text, color, size, t: 0, life: 1 });
@@ -194,14 +198,18 @@ export function startPaperPlane(icon: Element | null, onEnd: (won: boolean) => v
     } else if (holding) {
       plane.a = Math.max(-MAX_CLIMB, plane.a - PITCH_UP * dt);
     } else {
-      plane.a = Math.min(MAX_PITCH * 0.85, plane.a + PITCH_DOWN * dt);
+      plane.a = Math.min(MAX_PITCH, plane.a + PITCH_DOWN * dt);
     }
 
-    // energy: diving speeds you up, climbing slows you down, air drags
-    plane.v += (G * Math.sin(plane.a) - DRAG * plane.v * plane.v) * dt;
-    plane.v = clamp(plane.v, 40 * k, 1400 * k);
-    if (plane.v < V_STALL && plane.stall <= 0 && plane.a < 0.2) {
-      plane.stall = 0.45;
+    const target = V_CRUISE + DIVE_GAIN * Math.sin(plane.a);
+    plane.v += (target - plane.v) * ease(plane.v > target ? 0.8 : 1.8, dt);
+
+    // hold a steep climb too long and it stalls
+    if (holding && plane.stall <= 0 && plane.a < -0.6) climbT += dt;
+    else climbT = Math.max(0, climbT - dt * 2);
+    if (climbT > STALL_AFTER) {
+      climbT = 0;
+      plane.stall = 0.5;
       plane.wobble = 1;
       pop(plane.x, plane.y - 18, 'stall', MUTED, 11);
     }
