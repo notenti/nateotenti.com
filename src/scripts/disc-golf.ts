@@ -1,7 +1,7 @@
 // Disc golf: the words "disc golf" fold into a disc and hop out to a tee.
 // Pull back and release to throw. The page is the course, seen from above:
-// letters are trees, the screen edges are walls, and each hole's basket sits
-// at the end of a line of text. Three holes, then everything unfolds again.
+// letters are trees, the screen edges are walls, and the three baskets land
+// somewhere new every round. Then everything unfolds again.
 
 import {
   INK,
@@ -100,38 +100,58 @@ export function startDiscGolf(phrase: HTMLElement, onEnd: () => void) {
     return false;
   };
 
-  // Baskets sit just past the end of the last line of each target.
-  function basketFor(el: Element): { x: number; y: number } | null {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
-    if (!rects.length) return null;
-    const bottom = Math.max(...rects.map((r) => r.bottom));
-    const line = rects.filter((r) => r.bottom > bottom - 4);
-    const right = Math.max(...line.map((r) => r.right));
-    const top = Math.min(...line.map((r) => r.top));
-    const y = (top + bottom) / 2;
-    const x = right + 10 + BASKET_R;
-    if (x <= W - BASKET_R - 6) return { x, y };
-    // No room at the end of the line: hang it just below instead.
-    return { x: clamp(right - BASKET_R, BASKET_R + 6, W - BASKET_R - 6), y: bottom + BASKET_R + 8 };
-  }
-
   const nav = document.getElementById('nav-bar');
   const navBottom = nav?.getBoundingClientRect().bottom ?? H * 0.75;
   const tee = { x: W / 2, y: clamp(navBottom + 64, H * 0.5, H - 48) };
 
+  // Baskets land somewhere new every round: in a clear spot, a fair throw
+  // from the last one, and preferably tucked near some text so the letters
+  // come into play.
+  const nearestText = (x: number, y: number) => {
+    let best = Infinity;
+    for (const t of trees) {
+      const dx = Math.max(t.box.l - x, 0, x - t.box.r);
+      const dy = Math.max(t.box.t - y, 0, y - t.box.b);
+      best = Math.min(best, Math.hypot(dx, dy));
+    }
+    return best;
+  };
+  const HOLES = 3;
   const holes: Hole[] = [];
+  const used: { x: number; y: number }[] = [tee];
+  const edge = BASKET_R + 14;
+  const top = 72; // clear of the HUD
+  const bottom = H - 56; // clear of the hint
+  let minD = clamp(Math.min(W, H) * 0.3, 110, 320);
   let from = tee;
-  for (const el of Array.from(document.querySelectorAll('[data-hole]')).sort(
-    (a, b) => Number((a as HTMLElement).dataset.hole) - Number((b as HTMLElement).dataset.hole)
-  )) {
-    const b = basketFor(el);
-    if (!b || b.y < 0 || b.y > H) continue;
-    const dist = Math.hypot(b.x - from.x, b.y - from.y);
-    const par = dist < reach * 0.75 && !blocked(from.x, from.y, b.x, b.y) ? 2 : 3;
-    holes.push({ ...b, par });
-    from = b;
+  for (let i = 0; i < HOLES; i++) {
+    let pick: { x: number; y: number; score: number } | null = null;
+    for (let tries = 0; tries < 700; tries++) {
+      const x = rand(edge, W - edge);
+      const y = rand(top, bottom);
+      const d = Math.hypot(x - from.x, y - from.y);
+      if (d < minD || d > reach * 0.85) continue;
+      if (used.some((u) => Math.hypot(x - u.x, y - u.y) < minD * 0.6)) continue;
+      const gap = nearestText(x, y);
+      if (gap < BASKET_R + 6) continue;
+      let score = Math.random();
+      if (gap < 70) score += 1; // tucked in by the text
+      if (blocked(from.x, from.y, x, y)) score += 0.2; // something to throw around
+      if (!pick || score > pick.score) pick = { x, y, score };
+    }
+    if (!pick) {
+      // cramped screen: relax the spacing and try again
+      if (minD > 60) {
+        minD *= 0.7;
+        i--;
+      }
+      continue;
+    }
+    const dist = Math.hypot(pick.x - from.x, pick.y - from.y);
+    const par = dist < reach * 0.75 && !blocked(from.x, from.y, pick.x, pick.y) ? 2 : 3;
+    holes.push({ x: pick.x, y: pick.y, par });
+    used.push(pick);
+    from = pick;
   }
 
   // --- State --------------------------------------------------------------
