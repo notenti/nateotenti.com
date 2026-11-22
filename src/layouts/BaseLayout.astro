@@ -1,4 +1,6 @@
 ---
+import ThemeToggle from '../components/ThemeToggle.astro';
+
 interface Props {
   title: string;
   description?: string;
@@ -34,9 +36,17 @@ const siteUrl = "https://www.nateotenti.com";
     <link rel="preconnect" href="https://images.nateotenti.com" />
     <link rel="preload" href="/fonts/AlloVariable.woff2" as="font" type="font/woff2" crossorigin />
     <title>{title}</title>
+    <!-- Apply a pinned theme before first paint so there's no flash. -->
+    <script is:inline>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
   </head>
   <body class="min-h-svh">
     <slot />
+    <ThemeToggle />
   </body>
 </html>
 
