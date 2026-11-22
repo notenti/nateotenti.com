@@ -43,7 +43,7 @@
 </script>
 
 <style>
-  /* Fill the viewport in white; reset the default dialog box. */
+  /* Fill the viewport with the page color; reset the default dialog box. */
   .lightbox {
     position: fixed;
     inset: 0;
@@ -54,7 +54,7 @@
     margin: 0;
     padding: 0;
     border: 0;
-    background: #fff;
+    background: rgb(var(--paper));
   }
 
   /* Keep the page underneath from scrolling, without touching body overflow. */
@@ -64,7 +64,7 @@
   .lightbox::backdrop {
     overflow: hidden;
     overscroll-behavior: contain;
-    background: #fff;
+    background: rgb(var(--paper));
   }
 
   .lightbox img {
