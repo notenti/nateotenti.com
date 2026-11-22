@@ -48,12 +48,12 @@ const formatDateLong = (date: Date) => {
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
-          <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-          <h1 class="text-3xl font-bold text-stone-900 tracking-tight">Life</h1>
+          <a href="/" class="text-sm font-medium text-neutral-500 hover:text-accent mb-2 inline-block">&larr; home</a>
+          <h1 class="text-3xl font-[650] text-neutral-900 tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
-          class="p-2 text-stone-600 hover:text-accent transition-colors"
+          class="p-2 text-neutral-600 hover:text-accent transition-colors"
           aria-label="Toggle posts menu"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,8 +67,8 @@ const formatDateLong = (date: Date) => {
         <div class="absolute inset-0 bg-black/50" id="mobile-menu-overlay"></div>
         <nav class="absolute right-0 top-0 h-full w-72 bg-surface p-6 shadow-xl overflow-y-auto">
           <div class="flex justify-between items-center mb-6">
-            <span class="font-mono text-sm text-stone-400">Posts</span>
-            <button id="mobile-menu-close" class="p-2 text-stone-400 hover:text-accent">
+            <span class="text-sm font-medium text-neutral-500">Posts</span>
+            <button id="mobile-menu-close" class="p-2 text-neutral-400 hover:text-accent">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -96,15 +96,15 @@ const formatDateLong = (date: Date) => {
                       'font-medium',
                       postItem.slug === currentSlug
                         ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
-                        : 'text-stone-600 group-hover:text-accent'
+                        : 'text-neutral-600 group-hover:text-accent'
                     ]}
                   >
                     {postItem.data.title}
                   </span>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <time class="font-mono text-xs text-stone-400">{formatDate(postItem.data.date)}</time>
-                    <span class="text-stone-300">·</span>
-                    <span class="text-xs text-stone-400">{postItem.data.location}</span>
+                    <time class="text-xs text-neutral-400 tabular-nums">{formatDate(postItem.data.date)}</time>
+                    <span class="text-neutral-300">·</span>
+                    <span class="text-xs text-neutral-400">{postItem.data.location}</span>
                   </div>
                 </a>
               </li>
@@ -118,23 +118,23 @@ const formatDateLong = (date: Date) => {
         <div class="min-w-0">
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
-            <a href="/" class="font-mono text-sm text-stone-400 hover:text-accent mb-2 inline-block">&larr; home</a>
-            <h1 class="text-4xl font-bold text-stone-900 tracking-tight">Life</h1>
-            <p class="text-stone-500 mt-2">Photos and thoughts.</p>
+            <a href="/" class="text-sm font-medium text-neutral-500 hover:text-accent mb-2 inline-block">&larr; home</a>
+            <h1 class="text-4xl font-[650] text-neutral-900 tracking-tight">Life</h1>
+            <p class="text-neutral-500 mt-2">Photos and thoughts.</p>
           </header>
 
           <article>
             <header class="mb-8">
-              <h2 class="text-2xl md:text-3xl font-semibold text-stone-900 mb-3">{post.data.title}</h2>
-              <div class="flex flex-wrap items-center gap-3 text-sm text-stone-500">
-                <time class="font-mono">{formatDateLong(post.data.date)}</time>
-                <span class="text-stone-300">·</span>
+              <h2 class="text-2xl md:text-3xl font-semibold text-neutral-900 mb-3">{post.data.title}</h2>
+              <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+                <time class="tabular-nums">{formatDateLong(post.data.date)}</time>
+                <span class="text-neutral-300">·</span>
                 <span>{post.data.location}</span>
               </div>
             </header>
 
             {post.data.intro && (
-              <p class="text-lg text-stone-600 leading-relaxed mb-10">
+              <p class="text-lg text-neutral-600 leading-relaxed mb-10">
                 {post.data.intro}
               </p>
             )}
@@ -143,22 +143,22 @@ const formatDateLong = (date: Date) => {
               <Content />
             </div>
 
-            <div class="mt-16 pt-8 border-t border-stone-200 flex items-center justify-center gap-2">
+            <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
               {previousPost && (
                 <>
-                  <a href={`/life/${previousPost.slug}`} class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+                  <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
                     &larr; previous
                   </a>
-                  <span class="text-stone-300">·</span>
+                  <span class="text-neutral-300">·</span>
                 </>
               )}
-              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
                 &uarr; back to top
               </a>
               {nextPost && (
                 <>
-                  <span class="text-stone-300">·</span>
-                  <a href={`/life/${nextPost.slug}`} class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+                  <span class="text-neutral-300">·</span>
+                  <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
                     next &rarr;
                   </a>
                 </>
@@ -170,7 +170,7 @@ const formatDateLong = (date: Date) => {
         <!-- Desktop sidebar -->
         <aside class="hidden lg:block pt-[7.5rem]">
           <div>
-            <span class="font-mono text-sm text-stone-400 mb-4 block">Posts</span>
+            <span class="text-sm font-medium text-neutral-500 mb-4 block">Posts</span>
             <nav>
               <ul class="space-y-4">
                 {allPosts.map((postItem) => (
@@ -194,15 +194,15 @@ const formatDateLong = (date: Date) => {
                           'font-medium',
                           postItem.slug === currentSlug
                             ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
-                            : 'text-stone-600 group-hover:text-accent'
+                            : 'text-neutral-600 group-hover:text-accent'
                         ]}
                       >
                         {postItem.data.title}
                       </span>
                       <div class="flex items-center gap-2 mt-0.5">
-                        <time class="font-mono text-xs text-stone-400">{formatDate(postItem.data.date)}</time>
-                        <span class="text-stone-300">·</span>
-                        <span class="text-xs text-stone-400">{postItem.data.location}</span>
+                        <time class="text-xs text-neutral-400 tabular-nums">{formatDate(postItem.data.date)}</time>
+                        <span class="text-neutral-300">·</span>
+                        <span class="text-xs text-neutral-400">{postItem.data.location}</span>
                       </div>
                     </a>
                   </li>

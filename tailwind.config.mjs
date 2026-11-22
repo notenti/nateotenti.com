@@ -4,21 +4,22 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Space Grotesk"', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        // One family for everything; hierarchy comes from size and weight.
+        sans: ['Allo', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
+        // Monochrome: the accent is ink. Links and hovers darken rather than turn a color.
         accent: {
-          DEFAULT: '#76b900',
-          light: '#a4d65e',
+          DEFAULT: '#171717',
+          light: '#525252',
         },
         nvidia: {
-          DEFAULT: '#76b900',
-          light: '#a4d65e',
+          DEFAULT: '#171717',
+          light: '#525252',
         },
       },
       backgroundColor: {
-        surface: '#fafaf8',
+        surface: '#fafafa',
       },
     },
   },

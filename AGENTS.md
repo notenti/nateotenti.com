@@ -94,7 +94,8 @@ rclone sync ./photos r2:nateotenti-images/albums/album-name/
 ### Styling
 
 - Tailwind with custom theme in `tailwind.config.mjs`
-- Fonts: Space Grotesk (sans), JetBrains Mono (mono)
+- Font: Allo for everything (self-hosted in `public/fonts/`, OFL). Hierarchy comes from weight and size: display titles 650, post and section titles 600, nav and labels 500, body and dates 400 (dates use `tabular-nums`)
+- Palette: monochrome neutral greys; `accent` is ink (#171717)
 - Mobile-first responsive design
 
 ## Git Workflow

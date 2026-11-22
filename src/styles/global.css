@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Allo by Josh Puckett, SIL Open Font License (public/fonts/Allo-OFL.txt). Roundness stays at 0. */
+@font-face {
+  font-family: 'Allo';
+  src: url('/fonts/AlloVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   html {
     @apply antialiased;
@@ -15,9 +24,7 @@
 
   body {
     background-color: #ffffff;
-    background-image: radial-gradient(rgba(231, 229, 228, 0.5) 1px, transparent 1px);
-    background-size: 32px 32px;
-    @apply text-stone-700;
+    @apply text-neutral-700;
   }
 
   a {
@@ -35,15 +42,15 @@
   }
 
   .prose h1 {
-    @apply text-3xl font-semibold mb-6 text-stone-900;
+    @apply text-3xl font-semibold mb-6 text-neutral-900;
   }
 
   .prose h2 {
-    @apply text-2xl font-semibold mb-4 mt-8 text-stone-900;
+    @apply text-2xl font-semibold mb-4 mt-8 text-neutral-900;
   }
 
   .prose h3 {
-    @apply text-xl font-medium mb-3 mt-6 text-stone-900;
+    @apply text-xl font-medium mb-3 mt-6 text-neutral-900;
   }
 
   .prose img {

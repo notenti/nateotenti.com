@@ -29,8 +29,8 @@ const useObjectCover = aspect !== 'auto';
 ---
 
 <figure class={`photo-container m-0 ${className}`}>
-  <div class:list={['photo-wrapper relative rounded-sm overflow-hidden bg-stone-200', aspectClass]}>
-    <div class="photo-skeleton absolute inset-0 bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
+  <div class:list={['photo-wrapper relative rounded-sm overflow-hidden bg-neutral-200', aspectClass]}>
+    <div class="photo-skeleton absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
     <Image
       src={src}
       alt={alt}
@@ -44,7 +44,7 @@ const useObjectCover = aspect !== 'auto';
     />
   </div>
   {caption && (
-    <figcaption class="text-center text-xs text-stone-400 mt-1.5 tracking-wide">
+    <figcaption class="text-center text-xs text-neutral-400 mt-1.5 tracking-wide">
       {caption}
     </figcaption>
   )}
