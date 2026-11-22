@@ -1,0 +1,226 @@
+---
+// The Life "Posts" menu on small screens: a navigation drawer that slides in
+// from the right. Built as a modal <dialog> (focus containment, Esc and back
+// gesture, inert page, focus returned to the trigger) holding a horizontal
+// scroll-snap track, so the panel can be swiped closed natively.
+// Opened by the page's #mobile-menu-toggle button.
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'life'>[];
+  currentSlug?: string;
+}
+
+const { posts, currentSlug } = Astro.props;
+
+const formatDate = (date: Date) =>
+  date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+---
+
+<dialog id="mobile-menu" class="Drawer" aria-label="Posts">
+  <div class="Drawer-scroller">
+    <nav class="Drawer-sheet bg-surface p-6">
+      <div class="flex justify-between items-center mb-6">
+        <span class="text-sm font-medium text-neutral-500">Posts</span>
+        <button id="mobile-menu-close" class="p-2 text-neutral-400 hover:text-accent" aria-label="Close posts menu" autofocus>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <ul class="space-y-4">
+        {posts.map((post) => (
+          <li>
+            <a
+              href={`/life/${post.slug}`}
+              class="block transition-colors group"
+              aria-current={post.slug === currentSlug ? 'page' : undefined}
+            >
+              {post.data.type === 'album' && (
+                <Image
+                  src={post.data.cover}
+                  alt={post.data.title}
+                  width={200}
+                  height={150}
+                  class="w-full aspect-[4/3] object-cover rounded mb-2 border border-transparent group-hover:border-black transition-colors duration-200 ease-in-out"
+                  loading="lazy"
+                />
+              )}
+              <span
+                class:list={[
+                  'font-medium',
+                  post.slug === currentSlug
+                    ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
+                    : 'text-neutral-600 group-hover:text-accent',
+                ]}
+              >
+                {post.data.title}
+              </span>
+              <div class="flex items-center gap-2 mt-0.5">
+                <time class="text-xs text-neutral-400 tabular-nums">{formatDate(post.data.date)}</time>
+                <span class="text-neutral-300">·</span>
+                <span class="text-xs text-neutral-400">{post.data.location}</span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</dialog>
+
+<script>
+  const drawer = document.getElementById('mobile-menu') as HTMLDialogElement | null;
+  const openBtn = document.getElementById('mobile-menu-toggle');
+  if (drawer && openBtn) {
+    const scroller = drawer.querySelector('.Drawer-scroller') as HTMLElement;
+    const sheet = drawer.querySelector('.Drawer-sheet') as HTMLElement;
+    const closeBtn = document.getElementById('mobile-menu-close') as HTMLButtonElement;
+
+    openBtn.setAttribute('aria-controls', 'mobile-menu');
+    openBtn.setAttribute('aria-expanded', 'false');
+
+    // The track is [spacer | sheet]: scrolled to the start the sheet is off-screen
+    // (closed), scrolled to the end it is fully visible (open).
+    const openPosition = () => scroller.scrollWidth - scroller.clientWidth;
+
+    async function openDrawer() {
+      drawer!.showModal();
+      if (!CSS.supports('scroll-initial-target', 'nearest')) {
+        // Start from the closed stop so the scroll below slides the sheet in.
+        scroller.scrollTo({ left: 0, behavior: 'instant' });
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }
+      scroller.scrollTo({ left: openPosition(), behavior: 'auto' });
+    }
+
+    // Slide the sheet out; the observer closes the dialog once it has left,
+    // so the slide-out stays visible.
+    function closeDrawer() {
+      scroller.scrollTo({ left: 0, behavior: 'auto' });
+    }
+
+    const visibleThreshold = 1 / window.innerWidth;
+    new IntersectionObserver(
+      (entries) => {
+        const entry = entries.at(-1)!;
+        if (!drawer!.open) return;
+        if (entry.intersectionRatio < visibleThreshold) {
+          drawer!.close();
+          openBtn!.setAttribute('aria-expanded', 'false');
+        }
+        if (entry.intersectionRatio === 1) openBtn!.setAttribute('aria-expanded', 'true');
+      },
+      { root: drawer, threshold: [visibleThreshold, 1] },
+    ).observe(sheet);
+
+    openBtn.addEventListener('click', openDrawer);
+    closeBtn.addEventListener('click', closeDrawer);
+
+    // Tap on the dimmed area (inside the full-screen dialog, outside the sheet).
+    drawer.addEventListener('click', (event) => {
+      if (!sheet.contains(event.target as Node)) closeDrawer();
+    });
+
+    // Esc / back gesture: slide out instead of vanishing.
+    drawer.addEventListener('cancel', (event) => {
+      if (event.cancelable) {
+        event.preventDefault();
+        closeDrawer();
+      }
+    });
+
+    // Without scroll-driven animations, drive the backdrop fade from scroll.
+    if (!CSS.supports('animation-timeline: scroll()')) {
+      scroller.addEventListener('scroll', () => {
+        drawer!.style.setProperty('--drawer-backdrop', String(scroller.scrollLeft / sheet.offsetWidth));
+      });
+    }
+  }
+</script>
+
+<style>
+  .Drawer {
+    --drawer-width: min(18rem, 80dvw, 100dvw - 24px);
+    --drawer-backdrop: 0;
+
+    inset: 0;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+
+  .Drawer:modal {
+    overscroll-behavior: contain;
+  }
+
+  .Drawer::backdrop {
+    background: #000;
+    opacity: calc(var(--drawer-backdrop) / 2);
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  /* Swipe surface: a full-width spacer, then the sheet on the right. */
+  .Drawer-scroller {
+    display: grid;
+    grid-template-columns: 100% var(--drawer-width);
+    height: 100%;
+    overflow-x: scroll;
+    overscroll-behavior: none;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .Drawer-scroller {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* The "closed" stop. */
+  .Drawer-scroller::before {
+    content: '';
+    scroll-snap-align: start;
+    scroll-initial-target: nearest;
+  }
+
+  .Drawer-sheet {
+    height: 100svh;
+    overflow-y: auto;
+    scroll-snap-align: end;
+    scrollbar-width: none;
+    border-left: 1px solid #e5e5e5;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .Drawer {
+      timeline-scope: --drawer-fade;
+      animation: fade-drawer-backdrop linear both;
+      animation-timeline: --drawer-fade;
+    }
+
+    .Drawer-scroller {
+      scroll-timeline: --drawer-fade x;
+    }
+
+    @property --drawer-backdrop {
+      syntax: '<number>';
+      inherits: true;
+      initial-value: 0;
+    }
+
+    /* Scrolled to the start = closed = no dim; to the end = open = dimmed. */
+    @keyframes fade-drawer-backdrop {
+      0% { --drawer-backdrop: 0 }
+      100% { --drawer-backdrop: 1 }
+    }
+  }
+</style>
