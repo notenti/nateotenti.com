@@ -1,6 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Lightbox from '../components/Lightbox.astro';
+import NotedText from '../components/NotedText.astro';
+import { stripNotes } from '../lib/notes';
 
 interface Props {
   title: string;
@@ -20,7 +22,7 @@ const formatDate = (date: Date) => {
 };
 ---
 
-<BaseLayout title={`${title} - Nate Otenti`} description={intro}>
+<BaseLayout title={`${title} - Nate Otenti`} description={stripNotes(intro)}>
   <main class="min-h-screen p-8">
     <div class="max-w-4xl mx-auto p-8">
       <a href="/life" class="text-sm font-medium text-neutral-500 hover:text-accent mb-8 inline-block">&larr; life</a>
@@ -40,7 +42,7 @@ const formatDate = (date: Date) => {
 
       {intro && (
         <p class="text-lg text-neutral-600 leading-relaxed mb-10">
-          {intro}
+          <NotedText text={intro} />
         </p>
       )}
 

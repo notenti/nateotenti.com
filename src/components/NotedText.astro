@@ -1,0 +1,14 @@
+---
+// Renders a plain-text field, turning [[phrase|note]] into a highlighted phrase
+// with Nate's note (see src/lib/notes.ts).
+import Comment from './Comment.astro';
+import { splitNotes } from '../lib/notes';
+
+interface Props {
+  text: string;
+}
+
+const segments = splitNotes(Astro.props.text);
+---
+
+{segments.map((s) => (s.note ? <Comment note={s.note}>{s.text}</Comment> : s.text))}

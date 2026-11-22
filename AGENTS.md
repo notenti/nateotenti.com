@@ -62,10 +62,17 @@ We started our trip on Oʻahu, exploring the North Shore...
 - `src` - Image URL (required)
 - `aspect` - `'auto'` | `'portrait'` | `'landscape'` | `'square'` | `'16:9'` | `'4:3'` | `'3:2'` | `'2:3'` | `'3:4'`
 - `caption` - Optional caption text
+- `comment` - Optional note from Nate, opened from a marker on the photo
 
 **`<PhotoRow>`** - Horizontal grouping of images
 - `gap` - `'none'` | `'sm'` | `'md'` | `'lg'`
 - `align` - `'top'` | `'center'` | `'bottom'` | `'stretch'`
+
+**`<Comment>`** - A note from Nate that folds out over the content like a doc comment
+- `<Comment note="...">a phrase</Comment>` - highlights the phrase; clicking it shows the note (works inside `<Text>`)
+- `<Photo comment="..." />` - a marker on the photo's corner opens the note
+- `<Heading subtext="...">` - the section's note opens from a marker at the right of the title
+- In plain-text fields like `intro`, write `[[a phrase|the note]]` (see `src/lib/notes.ts`); it's stripped for meta descriptions
 
 **`<Text>`** - Storytelling prose between photos
 - Adds vertical margin for breathing room between images

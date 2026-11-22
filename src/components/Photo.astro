@@ -1,15 +1,18 @@
 ---
 import { Image } from 'astro:assets';
+import Comment from './Comment.astro';
 
 interface Props {
   src: string;
   alt?: string;
   caption?: string;
+  /** A note from Nate, opened from a marker on the photo's corner. */
+  comment?: string;
   aspect?: 'auto' | 'landscape' | 'portrait' | 'square' | '16:9' | '4:3' | '3:2' | '2:3' | '3:4';
   class?: string;
 }
 
-const { src, alt = '', caption, aspect = 'auto', class: className = '' } = Astro.props;
+const { src, alt = '', caption, comment, aspect = 'auto', class: className = '' } = Astro.props;
 
 // Map aspect prop to CSS aspect ratio
 const aspectClasses: Record<string, string> = {
@@ -28,7 +31,8 @@ const aspectClass = aspectClasses[aspect] || '';
 const useObjectCover = aspect !== 'auto';
 ---
 
-<figure class={`photo-container m-0 ${className}`}>
+<figure class={`photo-container relative m-0 ${className}`}>
+  {comment && <Comment note={comment} variant="photo" class="absolute right-2 top-2 z-10" />}
   <div class:list={['photo-wrapper relative rounded-sm overflow-hidden bg-neutral-200', aspectClass]}>
     <div class="photo-skeleton absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
     <Image
