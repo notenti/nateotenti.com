@@ -1,0 +1,56 @@
+---
+// A note from Nate, shown like a comment in a doc: it folds out over the content
+// without moving anything, and Escape or a click elsewhere closes it.
+//
+//   <Comment note="...">some phrase</Comment>   highlights the phrase; click it for the note
+//   <Comment note="..." />                       a small marker (used by section headings)
+//   <Comment note="..." variant="photo" />       a marker floating on a photo's corner
+interface Props {
+  note: string;
+  variant?: 'highlight' | 'marker' | 'photo';
+  /** Which edge of the trigger the note lines up with. */
+  align?: 'left' | 'right';
+  class?: string;
+}
+
+const hasText = Astro.slots.has('default');
+const {
+  note,
+  variant = hasText ? 'highlight' : 'marker',
+  align = variant === 'highlight' ? 'left' : 'right',
+  class: className,
+} = Astro.props;
+
+// Open/close behavior lives in src/scripts/comments.ts (loaded by BaseLayout), so the
+// script isn't inlined mid-sentence next to the first highlight.
+// The template below has no whitespace between tags, so no stray spaces appear around a highlight.
+const id = `note-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<span
+  class:list={[
+    'comment',
+    variant === 'highlight' ? 'relative inline' : 'inline-block',
+    variant === 'marker' && 'relative',
+    className,
+  ]}
+>{variant === 'highlight' ? (<button type="button" class="comment-toggle comment-highlight" aria-expanded="false" aria-controls={id}><slot /><span class="sr-only"> (Nate's note)</span></button>) : (<button
+      type="button"
+      class:list={[
+        'comment-toggle comment-marker inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2 text-xs font-medium transition-colors aria-expanded:border-accent aria-expanded:bg-accent aria-expanded:text-white',
+        variant === 'photo'
+          ? 'border-transparent bg-white/90 text-neutral-600 shadow-sm backdrop-blur hover:text-accent'
+          : 'border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-accent',
+      ]}
+      aria-expanded="false"
+      aria-controls={id}
+      aria-label="Show Nate's note"
+    ><span class="comment-avatar flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span><svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5V11h-.5a1 1 0 0 1-1-1V3.5Z" /></svg></button>)}<span
+    id={id}
+    role="note"
+    aria-label="Note from Nate"
+    class:list={[
+      'comment-panel absolute top-full z-30 mt-2 block w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-neutral-200 bg-surface px-4 py-3 text-left shadow-lg shadow-black/5',
+      align === 'right' ? 'right-0' : 'left-0',
+    ]}
+  ><span class="mb-1.5 flex items-center gap-2"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span><span class="text-sm font-medium text-neutral-900">Nate</span></span><span class="block text-base font-normal not-italic tracking-normal text-neutral-700 leading-relaxed">{note}</span></span></span>

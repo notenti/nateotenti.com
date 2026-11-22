@@ -75,12 +75,13 @@
   :root:not([data-theme='light']) .theme-icon-moon { display: none; }
 }
 
-/* Album section notes: a comment marker that opens Nate's note over the content (Heading.astro). */
+/* Nate's notes (Comment.astro): fold out over the content like a doc comment. */
 .comment-panel {
+  translate: var(--nudge, 0px) 0;
   visibility: hidden;
   opacity: 0;
   transform: translateY(-4px) scale(0.98);
-  transform-origin: top right;
+  transform-origin: top center;
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
 }
 .comment-panel.is-open {
@@ -88,6 +89,28 @@
   opacity: 1;
   transform: none;
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s;
+}
+.comment:has(.comment-panel.is-open) {
+  z-index: 40;
+}
+.comment-highlight {
+  display: inline;
+  padding: 0 1px;
+  border-radius: 2px;
+  background-color: rgb(var(--neutral-200) / 0.7);
+  border-bottom: 1.5px solid rgb(var(--neutral-400));
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.comment-highlight:hover,
+.comment-highlight[aria-expanded='true'] {
+  background-color: rgb(var(--neutral-300) / 0.7);
+  border-bottom-color: rgb(var(--ink));
 }
 .comment-toggle[aria-expanded='true'] .comment-avatar {
   background-color: rgb(var(--paper));
