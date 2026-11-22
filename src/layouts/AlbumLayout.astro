@@ -23,15 +23,15 @@ const formatDate = (date: Date) => {
 <BaseLayout title={`${title} - Nate Otenti`} description={intro}>
   <main class="min-h-screen p-8">
     <div class="max-w-4xl mx-auto p-8">
-      <a href="/life" class="font-mono text-sm text-stone-400 hover:text-accent mb-8 inline-block">&larr; life</a>
+      <a href="/life" class="text-sm font-medium text-neutral-500 hover:text-accent mb-8 inline-block">&larr; life</a>
 
       <header class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-semibold text-stone-900 mb-3">{title}</h1>
-        <div class="flex flex-wrap items-center gap-3 text-sm text-stone-500">
-          <time class="font-mono">{formatDate(date)}</time>
+        <h1 class="text-3xl md:text-4xl font-semibold text-neutral-900 mb-3">{title}</h1>
+        <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+          <time class="tabular-nums">{formatDate(date)}</time>
           {location && (
             <>
-              <span class="text-stone-300">·</span>
+              <span class="text-neutral-300">·</span>
               <span>{location}</span>
             </>
           )}
@@ -39,7 +39,7 @@ const formatDate = (date: Date) => {
       </header>
 
       {intro && (
-        <p class="text-lg text-stone-600 leading-relaxed mb-10">
+        <p class="text-lg text-neutral-600 leading-relaxed mb-10">
           {intro}
         </p>
       )}
@@ -48,8 +48,8 @@ const formatDate = (date: Date) => {
         <slot />
       </div>
 
-      <div class="mt-16 pt-8 border-t border-stone-200 flex justify-center">
-        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="font-mono text-sm text-stone-400 hover:text-accent transition-colors">
+      <div class="mt-16 pt-8 border-t border-neutral-200 flex justify-center">
+        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
           &uarr; back to top
         </a>
       </div>
