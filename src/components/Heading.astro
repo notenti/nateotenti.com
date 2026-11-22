@@ -51,8 +51,62 @@ const slug = id || textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace
         <span class="text-xs text-neutral-400">{location}</span>
       )
     )}
-    {subtext && (
-      <p class="text-sm text-neutral-500 mt-1.5 leading-relaxed max-w-prose">{subtext}</p>
-    )}
   </div>
+  {subtext && (
+    <!-- Like a comment in a doc: the marker opens Nate's note over the content, without moving it. -->
+    <div class="comment relative ml-auto mt-0.5 flex-shrink-0">
+      <button
+        type="button"
+        class="comment-toggle inline-flex items-center gap-1.5 rounded-full border border-neutral-200 py-0.5 pl-0.5 pr-2 text-xs font-medium text-neutral-500 transition-colors hover:border-neutral-400 hover:text-accent aria-expanded:border-accent aria-expanded:bg-accent aria-expanded:text-white"
+        aria-expanded="false"
+        aria-controls={`${slug}-note`}
+        aria-label="Show Nate's note"
+      >
+        <span class="comment-avatar flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span>
+        <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5V11h-.5a1 1 0 0 1-1-1V3.5Z" />
+        </svg>
+      </button>
+      <aside
+        id={`${slug}-note`}
+        class="comment-panel absolute right-0 top-full z-30 mt-2 w-[min(24rem,calc(100vw-3rem))] rounded-lg border border-neutral-200 bg-surface px-4 py-3 shadow-lg shadow-black/5"
+        aria-label="Note from Nate"
+      >
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span>
+          <span class="text-sm font-medium text-neutral-900">Nate</span>
+        </div>
+        <p class="text-base text-neutral-700 leading-relaxed">{subtext}</p>
+      </aside>
+    </div>
+  )}
 </div>
+
+
+<script>
+  // One note open at a time; Escape or a click elsewhere closes it.
+  const toggles = document.querySelectorAll<HTMLButtonElement>('.comment-toggle');
+  const setOpen = (btn: HTMLButtonElement, open: boolean) => {
+    btn.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-label', open ? "Hide Nate's note" : "Show Nate's note");
+    document.getElementById(btn.getAttribute('aria-controls')!)?.classList.toggle('is-open', open);
+  };
+  const closeAll = (except?: HTMLButtonElement) =>
+    toggles.forEach((b) => b !== except && b.getAttribute('aria-expanded') === 'true' && setOpen(b, false));
+
+  toggles.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      closeAll(btn);
+      setOpen(btn, open);
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element).closest('.comment')) closeAll();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const open = [...toggles].find((b) => b.getAttribute('aria-expanded') === 'true');
+    if (open) { closeAll(); open.focus(); }
+  });
+</script>

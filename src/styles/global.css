@@ -66,6 +66,37 @@
   --neutral-950: 250 250 250;
 }
 
+/* Theme toggle icon: the moon offers dark, the sun offers light. */
+.theme-icon-sun { display: none; }
+:root[data-theme='dark'] .theme-icon-sun { display: block; }
+:root[data-theme='dark'] .theme-icon-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-icon-sun { display: block; }
+  :root:not([data-theme='light']) .theme-icon-moon { display: none; }
+}
+
+/* Album section notes: a comment marker that opens Nate's note over the content (Heading.astro). */
+.comment-panel {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
+}
+.comment-panel.is-open {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s;
+}
+.comment-toggle[aria-expanded='true'] .comment-avatar {
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
+}
+@media (prefers-reduced-motion: reduce) {
+  .comment-panel { transition: none; }
+}
+
 @layer base {
   html {
     @apply antialiased;
