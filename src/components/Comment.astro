@@ -39,8 +39,8 @@ const id = `note-${Math.random().toString(36).slice(2, 9)}`;
       class:list={[
         'comment-toggle comment-marker inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2 text-xs font-medium transition-colors aria-expanded:border-accent aria-expanded:bg-accent aria-expanded:text-white',
         variant === 'photo'
-          ? 'border-transparent bg-white/90 text-neutral-600 shadow-sm backdrop-blur hover:text-accent'
-          : 'border-neutral-200 text-neutral-500 hover:border-neutral-400 hover:text-accent',
+          ? 'border-transparent bg-white/90 text-black shadow-sm backdrop-blur hover:underline underline-offset-4'
+          : 'border-neutral-200 text-black hover:border-neutral-400 hover:underline underline-offset-4',
       ]}
       aria-expanded="false"
       aria-controls={id}
@@ -53,4 +53,4 @@ const id = `note-${Math.random().toString(36).slice(2, 9)}`;
       'comment-panel absolute top-full z-30 mt-2 block w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-neutral-200 bg-surface px-4 py-3 text-left shadow-lg shadow-black/5',
       align === 'right' ? 'right-0' : 'left-0',
     ]}
-  ><span class="mb-1.5 flex items-center gap-2"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span><span class="text-sm font-medium text-neutral-900">Nate</span></span><span class="block text-base font-normal not-italic tracking-normal text-neutral-700 leading-relaxed">{note}</span></span></span>
+  ><span class="mb-1.5 flex items-center gap-2"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white" aria-hidden="true">N</span><span class="text-sm font-medium text-black">Nate</span></span><span class="block text-base font-normal not-italic tracking-normal text-black leading-relaxed">{note}</span></span></span>

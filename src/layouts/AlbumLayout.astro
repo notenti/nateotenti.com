@@ -25,15 +25,15 @@ const formatDate = (date: Date) => {
 <BaseLayout title={`${title} - Nate Otenti`} description={stripNotes(intro)}>
   <main class="min-h-screen p-8">
     <div class="max-w-4xl mx-auto p-8">
-      <a href="/life" class="text-sm font-medium text-neutral-500 hover:text-accent mb-8 inline-block">&larr; life</a>
+      <a href="/life" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-8 inline-block">&larr; life</a>
 
       <header class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-semibold text-neutral-900 mb-3">{title}</h1>
-        <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+        <h1 class="text-3xl md:text-4xl font-semibold text-black mb-3">{title}</h1>
+        <div class="flex flex-wrap items-center gap-3 text-sm text-black">
           <time class="tabular-nums">{formatDate(date)}</time>
           {location && (
             <>
-              <span class="text-neutral-300">·</span>
+              <span class="text-black">·</span>
               <span>{location}</span>
             </>
           )}
@@ -41,7 +41,7 @@ const formatDate = (date: Date) => {
       </header>
 
       {intro && (
-        <p class="text-lg text-neutral-600 leading-relaxed mb-10">
+        <p class="text-lg text-black leading-relaxed mb-10">
           <NotedText text={intro} />
         </p>
       )}
@@ -51,7 +51,7 @@ const formatDate = (date: Date) => {
       </div>
 
       <div class="mt-16 pt-8 border-t border-neutral-200 flex justify-center">
-        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
+        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
           &uarr; back to top
         </a>
       </div>

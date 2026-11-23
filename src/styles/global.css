@@ -133,7 +133,7 @@
 
   body {
     background-color: rgb(var(--paper));
-    @apply text-neutral-700;
+    @apply text-black;
   }
 
   a {
@@ -151,15 +151,15 @@
   }
 
   .prose h1 {
-    @apply text-3xl font-semibold mb-6 text-neutral-900;
+    @apply text-3xl font-semibold mb-6 text-black;
   }
 
   .prose h2 {
-    @apply text-2xl font-semibold mb-4 mt-8 text-neutral-900;
+    @apply text-2xl font-semibold mb-4 mt-8 text-black;
   }
 
   .prose h3 {
-    @apply text-xl font-medium mb-3 mt-6 text-neutral-900;
+    @apply text-xl font-medium mb-3 mt-6 text-black;
   }
 
   .prose img {
