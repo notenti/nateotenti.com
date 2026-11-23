@@ -90,6 +90,10 @@ We started our trip on Oʻahu, exploring the North Shore...
 }
 ```
 
+### Share Cards (Open Graph)
+
+`src/pages/og/[...path].png.ts` renders 1200×630 share cards at build time with satori + resvg: `/og/index.png` (home, the fallback), `/og/life.png`, and `/og/life/<slug>.png` (title, date, location, cover photo). Pages pass theirs to `BaseLayout` via `image`. Satori can't read woff2 or variable fonts, so `src/assets/og/` holds static Allo instances (400, 500, 650; opsz 32).
+
 ### Image Hosting
 
 Images are hosted on Cloudflare R2 at `images.nateotenti.com`. Upload images using rclone:
