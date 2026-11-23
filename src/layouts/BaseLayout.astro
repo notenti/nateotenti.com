@@ -8,8 +8,10 @@ interface Props {
 }
 
 const { title, description = "Software engineer, bar pie enthusiast, and poodle dad. Boston, MA.", image } = Astro.props;
-const ogImage = image || "/og-image.png";
 const siteUrl = "https://www.nateotenti.com";
+const pageUrl = new URL(Astro.url.pathname, siteUrl).href;
+// Share card: pages pass their own (see src/pages/og/); anything else gets the home card.
+const ogImage = new URL(image || "/og/index.png", siteUrl).href;
 ---
 
 <!doctype html>
@@ -21,16 +23,18 @@ const siteUrl = "https://www.nateotenti.com";
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={siteUrl} />
+    <meta property="og:url" content={pageUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={`${siteUrl}${ogImage}`} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
+    <meta name="twitter:image" content={ogImage} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://images.nateotenti.com" />
