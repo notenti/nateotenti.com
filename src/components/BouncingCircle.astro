@@ -1,0 +1,366 @@
+<!--
+  A blob that drifts around the landing page like an old DVD screensaver, and
+  behaves like a small, curious, timid creature:
+
+  - It drifts at a steady pace, and springs softly off the edges.
+  - Hold the cursor still and it creeps over to it, oozing toward it, then
+    hovers nearby. Move toward it and it side-steps out of your way, staying
+    wary for a few seconds before it comes back.
+  - Its outline ripples slightly, and it draws out a short tail when it moves
+    quickly. The shape never rotates: it has no front or back, so when it
+    changes direction the tail flows back into the body and out the other side.
+
+  It's white with `mix-blend-mode: difference`, so it reads as black on the
+  light theme and white on the dark one, and anything it passes over (text,
+  photos) is inverted, which keeps text readable underneath it.
+-->
+<div class="bouncing-circle" aria-hidden="true">
+  <svg viewBox="-1 -1 2 2"><path d="M1 0A1 1 0 1 1 -1 0A1 1 0 1 1 1 0Z" /></svg>
+</div>
+
+<style>
+  .bouncing-circle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--size);
+    height: var(--size);
+    mix-blend-mode: difference;
+    pointer-events: none;
+    z-index: 50;
+    will-change: transform;
+    --size: 7rem;
+  }
+
+  @media (min-width: 768px) {
+    .bouncing-circle {
+      --size: 9rem;
+    }
+  }
+
+  .bouncing-circle svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible; /* the tail reaches past the circle's box */
+  }
+
+  .bouncing-circle path {
+    fill: #fff;
+  }
+</style>
+
+<script>
+  // --- Tuning ---------------------------------------------------------------
+  // Distances in px, speeds in px/s, accelerations in px/s². Shape amounts
+  // are fractions of the radius.
+
+  // Drifting
+  const CRUISE = 80;            // resting speed it eases back to
+  const SETTLE = 1.1;           // how quickly it returns to cruise (1/s)
+  const MAX_SPEED = 520;
+
+  // Dodging
+  const FLEE_RADIUS = 180;      // cursor distance from its edge that it reacts to
+  const FLEE_ACCEL = 1500;      // push at point-blank range
+  const APPROACH_BOOST = 1 / 1000; // extra push per px/s the cursor closes in
+  const LUNGE_SPEED = 500;      // cursor approach speed that counts as a lunge
+  const LUNGE_KICK = 220;       // hop away on a lunge
+
+  // Curiosity
+  const PATIENCE = 0.9;         // seconds the cursor must be still before it approaches
+  const HOVER_GAP = 55;         // distance from its edge to the cursor it settles at
+  const CREEP_SPEED = 65;
+  const ORBIT_SPEED = 14;       // slow drift around the cursor while hovering
+  const FEAR_DECAY = 0.35;      // how fast fear fades (1/s): ~3s to calm down
+
+  // Shape
+  const TAIL = 1 / 1400;        // tail length per px/s above cruise
+  const MAX_TAIL = 0.3;
+  const WOBBLE = 0.022;         // outline ripple (±2.2%)
+  const WOBBLE_SPEED = 0.6;     // how fast the ripples drift around (rad/s)
+  const REACH = 0.13;           // bulge toward the cursor while creeping
+
+  // Walls: within CUSHION px of an edge a spring pushes it back, so it slows
+  // and springs off smoothly. Stiff enough to stop it from top speed.
+  const CUSHION = 40;
+  const WALL_K = 220;
+
+  const el = document.querySelector<HTMLElement>('.bouncing-circle');
+
+  if (el) {
+    const path = el.querySelector('path')!;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const clamp01 = (n: number) => Math.min(Math.max(n, 0), 1);
+
+    // --- State --------------------------------------------------------------
+    let r = el.offsetWidth / 2;
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+
+    // Position is the centre. Start somewhere random, heading off diagonally.
+    let x = r + Math.random() * Math.max(w - 2 * r, 0);
+    let y = r + Math.random() * Math.max(h - 2 * r, 0);
+    const start = (Math.PI / 4) * (1 + 2 * Math.floor(Math.random() * 4)) + (Math.random() - 0.5) * 0.4;
+    let vx = Math.cos(start) * CRUISE;
+    let vy = Math.sin(start) * CRUISE;
+
+    // Shape. The tail and the reach are vectors, not an angle plus a length:
+    // when the direction changes they shrink and regrow on the new side
+    // instead of rotating round.
+    let tailX = 0, tailY = 0;   // points the way it's travelling; the tail trails opposite
+    let reachX = 0, reachY = 0; // points at the cursor
+    const ripple = [Math.random() * 6, Math.random() * 6, Math.random() * 6];
+    let oozePhase = 0;
+
+    // Cursor, with a smoothed velocity.
+    let mx = 0, my = 0, mvx = 0, mvy = 0;
+    let hasPointer = false;
+    let lastMove = 0;
+    let lungeCooldown = 0;
+
+    // Mood: how long the cursor has been still, and how scared it is (0..1).
+    let stillFor = 0;
+    let fear = 0;
+    let orbitDir = 1;
+
+    window.addEventListener('pointermove', (e) => {
+      const now = performance.now();
+      if (hasPointer && lastMove) {
+        const dt = Math.max((now - lastMove) / 1000, 1 / 240);
+        mvx += ((e.clientX - mx) / dt - mvx) * 0.35;
+        mvy += ((e.clientY - my) / dt - mvy) * 0.35;
+      }
+      mx = e.clientX;
+      my = e.clientY;
+      lastMove = now;
+      hasPointer = true;
+    }, { passive: true });
+
+    const forgetPointer = () => { hasPointer = false; mvx = mvy = 0; };
+    document.documentElement.addEventListener('pointerleave', forgetPointer);
+    window.addEventListener('blur', forgetPointer);
+
+    // --- Drawing ------------------------------------------------------------
+    // The outline in a unit circle's coordinates. Points on the side away
+    // from travel are pulled back and pinched in, tapering into a rounded
+    // tip; it shrinks slightly as the tail grows so it stretches rather than
+    // grows. Then ripples and the reach push each point in or out.
+    const POINTS = 64;
+    const drawShape = () => {
+      const tail = Math.hypot(tailX, tailY);
+      const cos = tail > 1e-6 ? tailX / tail : 1;
+      const sin = tail > 1e-6 ? tailY / tail : 0;
+      const k = 1 / Math.sqrt(1 + 0.55 * tail);
+      const reach = Math.hypot(reachX, reachY);
+      const reachAngle = Math.atan2(reachY, reachX);
+      const bulge = reach * (0.75 + 0.25 * Math.sin(oozePhase)); // slow oozing rhythm
+
+      let d = '';
+      for (let i = 0; i < POINTS; i++) {
+        const t = (i / POINTS) * Math.PI * 2;
+        const c = Math.cos(t);
+        const back = (1 - c) / 2;                       // 0 at the front, 1 at the back
+        const lx = (c - tail * 1.5 * back * back) * k;  // along travel
+        const ly = Math.sin(t) * (1 - tail * back) * k; // sides taper toward the tip
+        let px = lx * cos - ly * sin;
+        let py = lx * sin + ly * cos;
+
+        const a = Math.atan2(py, px);
+        const toward = Math.max(Math.cos(a - reachAngle), 0) ** 3;
+        const f = 1
+          + WOBBLE * (0.5 * Math.sin(2 * a + ripple[0]) + 0.3 * Math.sin(3 * a + ripple[1]) + 0.2 * Math.sin(5 * a + ripple[2]))
+          + bulge * (toward - 0.15);
+        px *= f;
+        py *= f;
+        d += `${i ? 'L' : 'M'}${px.toFixed(4)} ${py.toFixed(4)}`;
+      }
+      path.setAttribute('d', d + 'Z');
+    };
+
+    const place = () => {
+      drawShape();
+      el.style.transform = `translate3d(${x - r}px, ${y - r}px, 0)`;
+    };
+
+    const measure = () => {
+      r = el.offsetWidth / 2;
+      w = window.innerWidth;
+      h = window.innerHeight;
+      x = Math.min(Math.max(x, r), Math.max(w - r, r));
+      y = Math.min(Math.max(y, r), Math.max(h - r, r));
+      place();
+    };
+
+    // --- Walls --------------------------------------------------------------
+    // Fade out any part of a push that points into a nearby wall, so it
+    // slides along walls instead of pinning itself against them.
+    const slide = (fx: number, fy: number): [number, number] => [
+      fx * clamp01((fx < 0 ? x - r : w - r - x) / CUSHION),
+      fy * clamp01((fy < 0 ? y - r : h - r - y) / CUSHION),
+    ];
+
+    // How far it can travel along a direction before reaching an edge.
+    const room = (dx: number, dy: number) => Math.min(
+      dx > 0 ? (w - r - x) / dx : dx < 0 ? (r - x) / dx : Infinity,
+      dy > 0 ? (h - r - y) / dy : dy < 0 ? (r - y) / dy : Infinity,
+    );
+
+    // --- Physics ------------------------------------------------------------
+    const step = (dt: number) => {
+      let ax = 0, ay = 0;
+      const speed = Math.hypot(vx, vy) || 1;
+      const hx = vx / speed, hy = vy / speed;
+
+      // Mood. Curiosity builds once the cursor has been still for a moment,
+      // and is held back by any lingering fear.
+      const cursorSpeed = Math.hypot(mvx, mvy);
+      if (!hasPointer) stillFor = 0;
+      else if (cursorSpeed < 40) stillFor += dt;
+      else { stillFor = 0; orbitDir = Math.random() < 0.5 ? -1 : 1; }
+      fear = Math.max(fear - FEAR_DECAY * dt, 0);
+      const desire = hasPointer ? clamp01((stillFor - PATIENCE) / 1.2) * (1 - fear) : 0;
+
+      // Ease speed back toward cruise, keeping the current heading. A curious
+      // blob lets go of its cruise so it can creep instead.
+      const cruise = CRUISE * (1 - desire);
+      ax += (hx * cruise - vx) * SETTLE;
+      ay += (hy * cruise - vy) * SETTLE;
+
+      let nx = 0, ny = 0; // unit vector from the cursor to the blob
+
+      if (hasPointer) {
+        const dx = x - mx, dy = y - my;
+        const dist = Math.hypot(dx, dy) || 0.001;
+        const gap = dist - r;
+        nx = dx / dist;
+        ny = dy / dist;
+
+        // Curiosity: approach until HOVER_GAP away, slowing as it arrives (and
+        // backing off if too close), then drift slowly around the cursor.
+        if (desire > 0) {
+          const radial = Math.min(Math.max((gap - HOVER_GAP) / 60, -1), 1);
+          const orbit = ORBIT_SPEED * (1 - Math.abs(radial)) * orbitDir;
+          ax += (-nx * CREEP_SPEED * radial - ny * orbit - vx) * 3 * desire;
+          ay += (-ny * CREEP_SPEED * radial + nx * orbit - vy) * 3 * desire;
+        }
+
+        if (gap < FLEE_RADIUS) {
+          const near = 1 - Math.max(gap, 0) / FLEE_RADIUS; // 0 far … 1 touching
+          const approach = Math.max(mvx * nx + mvy * ny, 0);
+          // Anything heading its way is frightening.
+          if (approach > 120) fear = Math.max(fear, Math.min(approach / 400, 1));
+          // A still cursor it has come to inspect isn't a threat; a moving
+          // one, or one it's still wary of, is.
+          const threat = Math.max(1 - desire, fear, Math.min(cursorSpeed / 300, 1));
+          const strength = FLEE_ACCEL * (1 + approach * APPROACH_BOOST) * threat * near * near;
+
+          // Side-step across the cursor's line of travel, to whichever side it's
+          // already on, unless that side is against a wall and the other isn't.
+          // If the cursor is barely moving, just back away from it.
+          let px = nx, py = ny;
+          if (cursorSpeed > 60) {
+            px = -mvy / cursorSpeed;
+            py = mvx / cursorSpeed;
+            if (px * nx + py * ny < 0) { px = -px; py = -py; }
+            if (room(px, py) < r && room(-px, -py) > room(px, py)) { px = -px; py = -py; }
+          }
+          const fx = (px + nx * 0.3) * strength;
+          const fy = (py + ny * 0.3) * strength;
+
+          // Keep the escape from driving it into a wall. If the walls cancel
+          // most of it (it's cornered), slip out sideways along whichever wall
+          // has more room.
+          let [sx, sy] = slide(fx, fy);
+          const full = Math.hypot(fx, fy);
+          if (full > 0 && Math.hypot(sx, sy) < full * 0.35) {
+            const side = room(-ny, nx) >= room(ny, -nx) ? 1 : -1;
+            [sx, sy] = slide(-ny * side * full * 0.8, nx * side * full * 0.8);
+          }
+          ax += sx;
+          ay += sy;
+
+          // A quick lunge makes it hop away, and leaves it fully scared.
+          if (approach > LUNGE_SPEED && lungeCooldown <= 0 && near > 0.2) {
+            const kick = LUNGE_KICK * Math.min(approach / 2500, 1);
+            const [kx, ky] = slide(px, py);
+            vx += kx * kick;
+            vy += ky * kick;
+            lungeCooldown = 0.4;
+            fear = 1;
+          }
+        }
+      }
+
+      // Soft walls.
+      const maxX = Math.max(w - r, r), maxY = Math.max(h - r, r);
+      const inL = r + CUSHION - x, inR = x - (maxX - CUSHION);
+      const inT = r + CUSHION - y, inB = y - (maxY - CUSHION);
+      if (inL > 0) ax += WALL_K * inL;
+      if (inR > 0) ax -= WALL_K * inR;
+      if (inT > 0) ay += WALL_K * inT;
+      if (inB > 0) ay -= WALL_K * inB;
+
+      vx += ax * dt;
+      vy += ay * dt;
+      const v = Math.hypot(vx, vy);
+      if (v > MAX_SPEED) { vx *= MAX_SPEED / v; vy *= MAX_SPEED / v; }
+
+      x += vx * dt;
+      y += vy * dt;
+
+      // Hard stop at the very edge, in case something outruns the cushion.
+      if (x < r)    { x = r;    vx = Math.max(vx, 0); }
+      if (x > maxX) { x = maxX; vx = Math.min(vx, 0); }
+      if (y < r)    { y = r;    vy = Math.max(vy, 0); }
+      if (y > maxY) { y = maxY; vy = Math.min(vy, 0); }
+
+      // --- Shape
+      // Tail: grows quickly when it speeds up and flows back in more slowly.
+      const travel = Math.hypot(vx, vy) || 1;
+      const tailLen = Math.min(Math.max(travel - CRUISE, 0) * TAIL, MAX_TAIL);
+      const tailWantX = (vx / travel) * tailLen, tailWantY = (vy / travel) * tailLen;
+      const tailRate = Math.min(dt * (tailLen > Math.hypot(tailX, tailY) ? 10 : 4), 1);
+      tailX += (tailWantX - tailX) * tailRate;
+      tailY += (tailWantY - tailY) * tailRate;
+
+      // Reach toward the cursor while creeping to it: fully while moving in,
+      // a slight lean once it has arrived.
+      const closing = -(vx * nx + vy * ny);
+      const reachLen = REACH * desire * (0.35 + 0.65 * clamp01(closing / (CREEP_SPEED * 0.5)));
+      const reachWantX = -nx * reachLen, reachWantY = -ny * reachLen;
+      const reachRate = Math.min(dt * (reachLen > Math.hypot(reachX, reachY) ? 2.5 : 5), 1);
+      reachX += (reachWantX - reachX) * reachRate;
+      reachY += (reachWantY - reachY) * reachRate;
+
+      ripple[0] += WOBBLE_SPEED * dt;
+      ripple[1] -= WOBBLE_SPEED * 0.73 * dt;
+      ripple[2] += WOBBLE_SPEED * 1.31 * dt;
+      oozePhase += 2.4 * dt;
+
+      lungeCooldown -= dt;
+      // Let the cursor's velocity fade when it stops moving.
+      const fade = Math.exp(-dt * 8);
+      mvx *= fade;
+      mvy *= fade;
+    };
+
+    let last = 0;
+    const tick = (now: number) => {
+      // Cap the step so a backgrounded tab doesn't teleport it.
+      const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+      last = now;
+      if (!reduceMotion.matches && dt > 0) {
+        // Substep so fast moves and the wall springs stay stable.
+        const n = Math.ceil(dt / 0.008);
+        for (let i = 0; i < n; i++) step(dt / n);
+        place();
+      }
+      requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('resize', measure);
+    measure();
+    requestAnimationFrame(tick);
+  }
+</script>

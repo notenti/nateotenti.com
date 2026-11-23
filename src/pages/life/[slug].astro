@@ -51,12 +51,12 @@ const formatDateLong = (date: Date) => {
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
-          <a href="/" class="text-sm font-medium text-neutral-500 hover:text-accent mb-2 inline-block">&larr; home</a>
-          <h1 class="text-3xl font-[650] text-neutral-900 tracking-tight">Life</h1>
+          <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+          <h1 class="text-3xl font-[650] text-black tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
-          class="p-2 text-neutral-600 hover:text-accent transition-colors"
+          class="p-2 text-black hover:underline underline-offset-4 transition-colors"
           aria-label="Posts menu"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,23 +72,23 @@ const formatDateLong = (date: Date) => {
         <div class="min-w-0">
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
-            <a href="/" class="text-sm font-medium text-neutral-500 hover:text-accent mb-2 inline-block">&larr; home</a>
-            <h1 class="text-4xl font-[650] text-neutral-900 tracking-tight">Life</h1>
-            <p class="text-neutral-500 mt-2">Photos and thoughts.</p>
+            <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+            <h1 class="text-4xl font-[650] text-black tracking-tight">Life</h1>
+            <p class="text-black mt-2">Photos and thoughts.</p>
           </header>
 
           <article>
             <header class="mb-8">
-              <h2 class="text-2xl md:text-3xl font-semibold text-neutral-900 mb-3">{post.data.title}</h2>
-              <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+              <h2 class="text-2xl md:text-3xl font-semibold text-black mb-3">{post.data.title}</h2>
+              <div class="flex flex-wrap items-center gap-3 text-sm text-black">
                 <time class="tabular-nums">{formatDateLong(post.data.date)}</time>
-                <span class="text-neutral-300">·</span>
+                <span class="text-black">·</span>
                 <span>{post.data.location}</span>
               </div>
             </header>
 
             {post.data.intro && (
-              <p class="text-lg text-neutral-600 leading-relaxed mb-10">
+              <p class="text-lg text-black leading-relaxed mb-10">
                 <NotedText text={post.data.intro} />
               </p>
             )}
@@ -100,19 +100,19 @@ const formatDateLong = (date: Date) => {
             <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
               {previousPost && (
                 <>
-                  <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
+                  <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
                     &larr; previous
                   </a>
-                  <span class="text-neutral-300">·</span>
+                  <span class="text-black">·</span>
                 </>
               )}
-              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
+              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
                 &uarr; back to top
               </a>
               {nextPost && (
                 <>
-                  <span class="text-neutral-300">·</span>
-                  <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-neutral-500 hover:text-accent transition-colors">
+                  <span class="text-black">·</span>
+                  <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
                     next &rarr;
                   </a>
                 </>
@@ -124,7 +124,7 @@ const formatDateLong = (date: Date) => {
         <!-- Desktop sidebar -->
         <aside class="hidden lg:block pt-[7.5rem]">
           <div>
-            <span class="text-sm font-medium text-neutral-500 mb-4 block">Posts</span>
+            <span class="text-sm font-medium text-black mb-4 block">Posts</span>
             <nav>
               <ul class="space-y-4">
                 {allPosts.map((postItem) => (
@@ -147,16 +147,16 @@ const formatDateLong = (date: Date) => {
                         class:list={[
                           'font-medium',
                           postItem.slug === currentSlug
-                            ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
-                            : 'text-neutral-600 group-hover:text-accent'
+                            ? 'text-black underline underline-offset-4'
+                            : 'text-black group-hover:underline underline-offset-4'
                         ]}
                       >
                         {postItem.data.title}
                       </span>
                       <div class="flex items-center gap-2 mt-0.5">
-                        <time class="text-xs text-neutral-400 tabular-nums">{formatDate(postItem.data.date)}</time>
-                        <span class="text-neutral-300">·</span>
-                        <span class="text-xs text-neutral-400">{postItem.data.location}</span>
+                        <time class="text-xs text-black tabular-nums">{formatDate(postItem.data.date)}</time>
+                        <span class="text-black">·</span>
+                        <span class="text-xs text-black">{postItem.data.location}</span>
                       </div>
                     </a>
                   </li>

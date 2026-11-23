@@ -22,8 +22,8 @@ const formatDate = (date: Date) =>
   <div class="Drawer-scroller">
     <nav class="Drawer-sheet bg-surface p-6">
       <div class="flex justify-between items-center mb-6">
-        <span class="text-sm font-medium text-neutral-500">Posts</span>
-        <button id="mobile-menu-close" class="p-2 text-neutral-400 hover:text-accent" aria-label="Close posts menu" autofocus>
+        <span class="text-sm font-medium text-black">Posts</span>
+        <button id="mobile-menu-close" class="p-2 text-black hover:underline underline-offset-4" aria-label="Close posts menu" autofocus>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -51,16 +51,16 @@ const formatDate = (date: Date) =>
                 class:list={[
                   'font-medium',
                   post.slug === currentSlug
-                    ? 'text-nvidia underline decoration-nvidia-light underline-offset-4'
-                    : 'text-neutral-600 group-hover:text-accent',
+                    ? 'text-black underline underline-offset-4'
+                    : 'text-black group-hover:underline underline-offset-4',
                 ]}
               >
                 {post.data.title}
               </span>
               <div class="flex items-center gap-2 mt-0.5">
-                <time class="text-xs text-neutral-400 tabular-nums">{formatDate(post.data.date)}</time>
-                <span class="text-neutral-300">·</span>
-                <span class="text-xs text-neutral-400">{post.data.location}</span>
+                <time class="text-xs text-black tabular-nums">{formatDate(post.data.date)}</time>
+                <span class="text-black">·</span>
+                <span class="text-xs text-black">{post.data.location}</span>
               </div>
             </a>
           </li>
