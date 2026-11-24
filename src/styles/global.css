@@ -174,3 +174,37 @@
     @apply list-decimal list-inside mb-4 space-y-1;
   }
 }
+
+/* Page transitions (native cross-document view transitions). Pages that share a
+   piece tag it with the same vt-* class, and the browser morphs it from one
+   page to the next: home's greeting becomes the resume's name, the NVIDIA line
+   its summary, the nav its contact links. Everything else fades and settles. */
+@view-transition { navigation: auto; }
+
+.vt-name { view-transition-name: vt-name; }
+.vt-intro { view-transition-name: vt-intro; }
+.vt-links { view-transition-name: vt-links; }
+#theme-toggle { view-transition-name: vt-toggle; }
+
+::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Morphing text boxes hug their text, so the snapshots scale by width (the
+   default) and line up word for word instead of stretching. */
+.vt-name, .vt-intro { width: fit-content; }
+::view-transition-old(vt-name), ::view-transition-new(vt-name),
+::view-transition-old(vt-intro), ::view-transition-new(vt-intro),
+::view-transition-old(vt-links), ::view-transition-new(vt-links) {
+  animation-duration: 520ms;
+}
+::view-transition-old(vt-toggle), ::view-transition-new(vt-toggle) { animation: none; }
+
+::view-transition-old(root) { animation: vt-out 180ms ease-out both; }
+::view-transition-new(root) { animation: vt-in 420ms 120ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; translate: 0 10px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
