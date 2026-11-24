@@ -13,10 +13,70 @@
   It's white with `mix-blend-mode: difference`, so it reads as black on the
   light theme and white on the dark one, and anything it passes over (text,
   photos) is inverted, which keeps text readable underneath it.
+
+  A button beside the theme toggle, a little outline of the blob, gets rid of
+  it: the blob winds up and fires itself into the button like a slingshot, and
+  the glyph fills in. Pressing it again fires the blob back out (see
+  src/scripts/blob-slingshot.ts). The choice is remembered across visits.
 -->
 <div class="bouncing-circle" aria-hidden="true">
   <svg viewBox="-1 -1 2 2"><path d="M1 0A1 1 0 1 1 -1 0A1 1 0 1 1 1 0Z" /></svg>
 </div>
+<button type="button" class="blob-dismiss" aria-label="that blob is annoying, nate. Get rid of it" title="that blob is annoying, nate. Get rid of it">
+  <!-- The favicon's blob, framed loosely so it sits at the moon's size. -->
+  <svg viewBox="-4.2 -4.2 40.4 40.4" aria-hidden="true">
+    <path d="M6.44 4.78C7.43 4.07 8.55 3.52 9.64 3.05C10.74 2.58 11.86 2.2 13.01 1.96C14.15 1.73 15.34 1.58 16.51 1.65C17.68 1.72 18.9 1.96 20.03 2.4C21.16 2.83 22.26 3.49 23.28 4.24C24.3 5 25.27 5.92 26.14 6.93C27.02 7.94 27.87 9.09 28.52 10.3C29.17 11.51 29.71 12.88 30.04 14.19C30.37 15.5 30.49 16.89 30.5 18.17C30.51 19.45 30.37 20.72 30.12 21.88C29.87 23.05 29.51 24.18 29 25.18C28.49 26.18 27.84 27.11 27.06 27.86C26.27 28.61 25.32 29.24 24.28 29.66C23.24 30.08 22.02 30.31 20.81 30.35C19.6 30.39 18.27 30.19 17.02 29.9C15.76 29.61 14.49 29.12 13.27 28.6C12.06 28.09 10.85 27.51 9.72 26.82C8.59 26.14 7.44 25.38 6.48 24.49C5.51 23.6 4.63 22.57 3.92 21.51C3.21 20.44 2.64 19.27 2.24 18.08C1.83 16.9 1.55 15.63 1.5 14.4C1.45 13.17 1.57 11.85 1.94 10.67C2.3 9.5 2.94 8.31 3.69 7.33C4.44 6.35 5.45 5.5 6.44 4.78Z" />
+  </svg>
+</button>
+<!-- Before first paint: if it was dismissed on an earlier visit, hide it and
+     show it tucked into the button. -->
+<script is:inline>
+  try {
+    if (localStorage.getItem('blob') === 'gone') {
+      document.documentElement.classList.add('blob-gone', 'blob-docked');
+      const b = document.querySelector('.blob-dismiss');
+      b.ariaLabel = b.title = 'bring back the blob';
+    }
+  } catch {}
+</script>
+
+<style>
+  :global(html.blob-gone) .bouncing-circle {
+    display: none;
+  }
+
+  /* Sits just left of the theme toggle, matching it (bottom-4 right-4, 2rem). */
+  .blob-dismiss {
+    position: fixed;
+    bottom: 1rem;
+    right: 3rem;
+    z-index: 40;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    color: rgb(var(--ink));
+  }
+
+  .blob-dismiss svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    overflow: visible;
+  }
+
+  /* An outline while the blob is out, filled in while it's in the button. */
+  .blob-dismiss path {
+    fill: transparent;
+    stroke: currentColor;
+    stroke-width: 1.75; /* like the theme icons */
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    transition: fill 0.12s;
+  }
+
+  :global(html.blob-docked) .blob-dismiss path {
+    fill: currentColor;
+  }
+</style>
 
 <style>
   .bouncing-circle {
@@ -51,6 +111,8 @@
 </style>
 
 <script>
+  import { leave as slingIn, back as slingOut, type Pose, type Scene } from '../scripts/blob-slingshot';
+
   // --- Tuning ---------------------------------------------------------------
   // Distances in px, speeds in px/s, accelerations in px/s². Shape amounts
   // are fractions of the radius.
@@ -86,7 +148,11 @@
   const CUSHION = 40;
   const WALL_K = 220;
 
+  // Leaving and coming back are played from src/scripts/blob-slingshot.ts.
+  const RELEASE_SPEED = 200;    // default speed it roams off at when it's back
+
   const el = document.querySelector<HTMLElement>('.bouncing-circle');
+  const dismiss = document.querySelector<HTMLButtonElement>('.blob-dismiss');
 
   if (el) {
     const path = el.querySelector('path')!;
@@ -141,13 +207,106 @@
     document.documentElement.addEventListener('pointerleave', forgetPointer);
     window.addEventListener('blur', forgetPointer);
 
+    // Leaving and returning. The button's position is re-read every frame in
+    // case the window resizes mid-animation.
+    const root = document.documentElement;
+    let mode: 'roam' | 'leaving' | 'gone' | 'returning' = root.classList.contains('blob-gone') ? 'gone' : 'roam';
+    let fxT = 0;              // seconds into the animation
+    let pose: Pose | null = null;
+    const scene: Scene = { fromX: 0, fromY: 0, homeX: 0, homeY: 0, bx: 0, by: 0 };
+
+    const readScene = () => {
+      // The untransformed box, so the button's own knock doesn't feed back in.
+      scene.bx = dismiss!.offsetLeft + dismiss!.offsetWidth / 2;
+      scene.by = dismiss!.offsetTop + dismiss!.offsetHeight / 2;
+    };
+
+    const begin = (next: 'leaving' | 'returning') => {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      readScene();
+      scene.fromX = x; scene.fromY = y;
+      // Coming back, it lands up and to the left of the button.
+      scene.homeX = Math.min(Math.max(scene.bx - r * 1.6, r + CUSHION), Math.max(w - r - CUSHION, r));
+      scene.homeY = Math.min(Math.max(scene.by - r * 1.9, r + CUSHION), Math.max(h - r - CUSHION, r));
+      fxT = 0;
+      reachX = reachY = 0;
+      mode = next;
+      pose = (next === 'leaving' ? slingIn : slingOut)(0, scene);
+    };
+
+    const dock = (isDocked: boolean) => {
+      root.classList.toggle('blob-docked', isDocked);
+      dismiss!.ariaLabel = dismiss!.title = isDocked ? 'bring back the blob' : 'that blob is annoying, nate. Get rid of it';
+    };
+
+    const remember = (isGone: boolean) => {
+      root.classList.toggle('blob-gone', isGone);
+      dock(isGone);
+      try {
+        if (isGone) localStorage.setItem('blob', 'gone');
+        else localStorage.removeItem('blob');
+      } catch {}
+    };
+
+    const gone = () => {
+      mode = 'gone';
+      pose = null;
+      remember(true);
+      el.style.transform = '';
+      dismiss!.style.transform = '';
+    };
+
+    // Back: show it (beating the blob-gone rule) and play the way back.
+    const comeBack = () => {
+      el.style.display = 'block';
+      r = el.offsetWidth / 2;
+      tailX = tailY = 0;
+      fear = 0; stillFor = 0;
+      x = 0; y = 0;
+      begin('returning');
+      x = pose!.x; y = pose!.y;
+      place();
+      animate();
+    };
+
+    // Home again: hand it back to the usual physics.
+    const release = () => {
+      const [rx, ry] = pose?.release ?? [0, -RELEASE_SPEED];
+      vx = rx; vy = ry;
+      mode = 'roam';
+      pose = null;
+      remember(false);
+      el.style.display = '';
+      dismiss!.style.transform = '';
+    };
+
+    dismiss?.addEventListener('click', () => {
+      if (mode === 'leaving' || mode === 'returning') return;
+      if (mode === 'roam') {
+        if (reduceMotion.matches) { remember(true); mode = 'gone'; return; }
+        begin('leaving');
+      } else if (reduceMotion.matches) {
+        remember(false);
+        mode = 'roam';
+        r = el.offsetWidth / 2;
+        measure();
+      } else {
+        comeBack();
+      }
+    });
+
     // --- Drawing ------------------------------------------------------------
     // The outline in a unit circle's coordinates. Points on the side away
     // from travel are pulled back and pinched in, tapering into a rounded
     // tip; it shrinks slightly as the tail grows so it stretches rather than
     // grows. Then ripples and the reach push each point in or out.
     const POINTS = 64;
+
     const drawShape = () => {
+      const scale = pose?.scale ?? 1;
+      const sq = pose?.squash ?? 1;
+      const sqCos = Math.cos(pose?.squashAngle ?? 0), sqSin = Math.sin(pose?.squashAngle ?? 0);
       const tail = Math.hypot(tailX, tailY);
       const cos = tail > 1e-6 ? tailX / tail : 1;
       const sin = tail > 1e-6 ? tailY / tail : 0;
@@ -166,13 +325,22 @@
         let px = lx * cos - ly * sin;
         let py = lx * sin + ly * cos;
 
+        // Squash or stretch along an axis, keeping its area.
+        if (sq !== 1) {
+          const along = (px * sqCos + py * sqSin) * sq;
+          const across = (-px * sqSin + py * sqCos) / sq;
+          px = along * sqCos - across * sqSin;
+          py = along * sqSin + across * sqCos;
+        }
+
         const a = Math.atan2(py, px);
         const toward = Math.max(Math.cos(a - reachAngle), 0) ** 3;
         const f = 1
           + WOBBLE * (0.5 * Math.sin(2 * a + ripple[0]) + 0.3 * Math.sin(3 * a + ripple[1]) + 0.2 * Math.sin(5 * a + ripple[2]))
           + bulge * (toward - 0.15);
-        px *= f;
-        py *= f;
+        px *= f * scale;
+        py *= f * scale;
+
         d += `${i ? 'L' : 'M'}${px.toFixed(4)} ${py.toFixed(4)}`;
       }
       path.setAttribute('d', d + 'Z');
@@ -181,12 +349,15 @@
     const place = () => {
       drawShape();
       el.style.transform = `translate3d(${x - r}px, ${y - r}px, 0)`;
+      if (mode === 'leaving' || mode === 'returning') dismiss!.style.transform = pose?.button ?? '';
     };
 
     const measure = () => {
       r = el.offsetWidth / 2;
       w = window.innerWidth;
       h = window.innerHeight;
+      if (mode === 'gone') return;
+      if (mode !== 'roam') { place(); return; }
       x = Math.min(Math.max(x, r), Math.max(w - r, r));
       y = Math.min(Math.max(y, r), Math.max(h - r, r));
       place();
@@ -206,8 +377,37 @@
       dy > 0 ? (h - r - y) / dy : dy < 0 ? (r - y) / dy : Infinity,
     );
 
+    // --- Leaving and returning ----------------------------------------------
+    // Sample the animation's pose; the tail trails its motion unless the pose
+    // sets one.
+    const playStep = (dt: number) => {
+      fxT += dt;
+      pose = (mode === 'leaving' ? slingIn : slingOut)(fxT, scene);
+      if (root.classList.contains('blob-docked') !== pose.docked) dock(pose.docked);
+      vx = (pose.x - x) / dt;
+      vy = (pose.y - y) / dt;
+      x = pose.x;
+      y = pose.y;
+      if (pose.tail) {
+        [tailX, tailY] = pose.tail;
+      } else {
+        const travel = Math.hypot(vx, vy) || 1;
+        const tailLen = Math.min(Math.max(travel - CRUISE, 0) * TAIL, pose.tailMax ?? MAX_TAIL);
+        const tailRate = Math.min(dt * 8, 1);
+        tailX += ((vx / travel) * tailLen - tailX) * tailRate;
+        tailY += ((vy / travel) * tailLen - tailY) * tailRate;
+      }
+      const settle = Math.min(dt * 6, 1);
+      reachX -= reachX * settle;
+      reachY -= reachY * settle;
+      ripple[0] += WOBBLE_SPEED * dt;
+      ripple[1] -= WOBBLE_SPEED * 0.73 * dt;
+      ripple[2] += WOBBLE_SPEED * 1.31 * dt;
+    };
+
     // --- Physics ------------------------------------------------------------
     const step = (dt: number) => {
+      if (mode === 'leaving' || mode === 'returning') { playStep(dt); return; }
       let ax = 0, ay = 0;
       const speed = Math.hypot(vx, vy) || 1;
       const hx = vx / speed, hy = vy / speed;
@@ -350,17 +550,30 @@
       // Cap the step so a backgrounded tab doesn't teleport it.
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
-      if (!reduceMotion.matches && dt > 0) {
+      if (mode === 'gone') { running = false; last = 0; return; }
+      if ((mode !== 'roam' || !reduceMotion.matches) && dt > 0) {
+        if (mode !== 'roam') readScene();
         // Substep so fast moves and the wall springs stay stable.
         const n = Math.ceil(dt / 0.008);
         for (let i = 0; i < n; i++) step(dt / n);
         place();
+        if (pose?.done) {
+          if (mode === 'leaving') { gone(); running = false; last = 0; return; } // stop animating
+          release();
+        }
       }
       requestAnimationFrame(tick);
     };
 
+    // Only animate while it's on screen.
+    let running = false;
+    const animate = () => {
+      if (running) return;
+      running = true;
+      requestAnimationFrame(tick);
+    };
+
     window.addEventListener('resize', measure);
-    measure();
-    requestAnimationFrame(tick);
+    if (mode === 'roam') { measure(); animate(); }
   }
 </script>
