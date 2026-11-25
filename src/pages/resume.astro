@@ -12,6 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <!-- Sits just left of the theme toggle, in its style. -->
   <a
     id="resume-pdf"
+    style="view-transition-name: vt-print"
     href="/resume.pdf"
     class="fixed bottom-4 right-12 z-40 p-2 rounded-full text-black transition-colors"
     aria-label="Resume as PDF"
@@ -31,7 +32,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h1 class="vt-name">Nathan Otenti</h1>
         <p class="thesis vt-intro">Senior software engineer who builds the tools other engineers work in: agent platforms, test infrastructure, and the CLIs and APIs around them.</p>
       </div>
-      <ul class="contact vt-links">
+      <ul class="contact" style="view-transition-name: vt-contact">
         <li><a href="mailto:otenti.nate@gmail.com">otenti.nate@gmail.com</a></li>
         <li>(508) 320-0804</li>
         <li>Boston, MA</li>
@@ -41,10 +42,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </header>
 
     <section>
-      <h2>Experience</h2>
+      <h2 style="view-transition-name: vt-r1">Experience</h2>
       <div class="entries">
 
-        <div class="job">
+        <div style="view-transition-name: vt-r2" class="job">
           <div class="when"><span>2026 – now</span><span>Remote</span></div>
           <div class="what">
             <div class="head"><span class="org">NVIDIA</span><span class="role">Senior Software Engineer, Datacenter App Engineering</span></div>
@@ -57,7 +58,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </div>
 
-        <div class="job">
+        <div style="view-transition-name: vt-r3" class="job">
           <div class="when"><span>2022 – 2026</span><span>Remote</span></div>
           <div class="what">
             <div class="head"><span class="org">Block</span><span class="role">Senior Software Engineer, Developer Experience</span></div>
@@ -71,7 +72,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </div>
 
-        <div class="job">
+        <div style="view-transition-name: vt-r4" class="job">
           <div class="when"><span>2021 – 2022</span><span>Boston · Remote</span></div>
           <div class="what">
             <div class="head"><span class="org">Motional</span><span class="role">Senior Software Engineer, Backend</span></div>
@@ -82,7 +83,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </div>
 
-        <div class="job promo">
+        <div style="view-transition-name: vt-r5" class="job promo">
           <div class="when"><span>2020 – 2021</span></div>
           <div class="what">
             <div class="head"><span class="role">Software Engineer</span></div>
@@ -92,7 +93,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </div>
 
-        <div class="job">
+        <div style="view-transition-name: vt-r6" class="job">
           <div class="when"><span>2018 – 2020</span><span>Cambridge, MA</span></div>
           <div class="what">
             <div class="head"><span class="org">Aurora Flight Sciences</span><span class="role">Software Engineer</span></div>
@@ -106,7 +107,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <section>
+    <section style="view-transition-name: vt-r7">
       <h2>Education</h2>
       <div class="entries schools">
         <div class="job">
@@ -120,7 +121,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </section>
 
-    <section>
+    <section style="view-transition-name: vt-r8">
       <h2>Toolkit</h2>
       <dl class="entries pairs">
         <div><dt>Languages</dt><dd>Python, TypeScript, Go, Kotlin, C++</dd></div>
