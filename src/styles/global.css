@@ -175,64 +175,68 @@
   }
 }
 
-/* Page transitions (native cross-document view transitions).
-   Home -> resume: the greeting and the NVIDIA line morph into the resume's name
-   and summary with a blur crossfade (never two strings on top of each other),
-   then the rest of the resume settles in as a cascade, one block at a time.
-   Going back plays the same choreography in reverse.
-   Pieces that exist on both pages share a vt-* name; pieces on one page only
-   get a vt-r or vt-h name so each can enter (or leave) on its own beat. */
+/* Page transitions (native cross-document view transitions). Crisp, not soft:
+   no fades, no blur, only hard edges and motion, to match the black and white.
+   Home -> resume: the greeting and the NVIDIA line glide to their new spot and
+   roll over like a split-flap board into the resume's name and summary; then
+   the rest of the resume wipes in block by block, top to bottom. Going back
+   runs the same moves in reverse.
+   Pieces on both pages share a vt-* name; pieces on one page only get a vt-r
+   or vt-h name so each can enter (or leave) on its own beat. */
 @view-transition { navigation: auto; }
 
-:root { --vt-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+:root { --vt-ease: cubic-bezier(0.16, 1, 0.3, 1); }
 
 .vt-name { view-transition-name: vt-name; }
 .vt-intro { view-transition-name: vt-intro; }
 .vt-name, .vt-intro { width: fit-content; }
 #theme-toggle { view-transition-name: vt-toggle; }
 
-/* Shared pieces: the box glides; the ink blurs across instead of double-exposing. */
+/* Shared pieces: the box glides while the text rolls through it. */
 ::view-transition-group(vt-name),
 ::view-transition-group(vt-intro) {
-  animation-duration: 680ms;
+  animation-duration: 640ms;
   animation-timing-function: var(--vt-ease);
 }
+::view-transition-image-pair(vt-name),
+::view-transition-image-pair(vt-intro) { overflow: clip; }
 ::view-transition-old(vt-name), ::view-transition-old(vt-intro) {
-  animation: vt-blur-out 260ms var(--vt-ease) both;
+  mix-blend-mode: normal;
+  animation: vt-roll-out 520ms var(--vt-ease) both;
 }
 ::view-transition-new(vt-name), ::view-transition-new(vt-intro) {
-  animation: vt-blur-in 520ms 140ms var(--vt-ease) both;
+  mix-blend-mode: normal;
+  animation: vt-roll-in 520ms 40ms var(--vt-ease) both;
 }
 ::view-transition-group(vt-toggle),
 ::view-transition-old(vt-toggle), ::view-transition-new(vt-toggle) { animation: none; }
 
-/* Pieces on one side only: arrive rising out of a soft blur, leave quickly. */
-::view-transition-new(*):only-child { animation: vt-rise 620ms var(--vt-ease) both; }
-::view-transition-old(*):only-child { animation: vt-leave 200ms ease-out both; }
+/* Pieces on one side only: wipe in from the top edge, wipe out the same way. */
+::view-transition-new(*):only-child { animation: vt-wipe-in 560ms var(--vt-ease) both; }
+::view-transition-old(*):only-child { animation: vt-wipe-out 200ms cubic-bezier(0.5, 0, 0.75, 0) both; }
 
-/* The cascade. Resume blocks top to bottom, then home's own pieces on the way back. */
-::view-transition-new(vt-contact):only-child { animation-delay: 140ms; }
-::view-transition-new(vt-r1):only-child { animation-delay: 170ms; }
-::view-transition-new(vt-r2):only-child { animation-delay: 205ms; }
+/* The cascade: resume blocks top to bottom, then home's own pieces on the way back. */
+::view-transition-new(vt-contact):only-child { animation-delay: 120ms; }
+::view-transition-new(vt-r1):only-child { animation-delay: 160ms; }
+::view-transition-new(vt-r2):only-child { animation-delay: 200ms; }
 ::view-transition-new(vt-r3):only-child { animation-delay: 240ms; }
-::view-transition-new(vt-r4):only-child { animation-delay: 275ms; }
-::view-transition-new(vt-r5):only-child { animation-delay: 305ms; }
-::view-transition-new(vt-r6):only-child { animation-delay: 335ms; }
-::view-transition-new(vt-r7):only-child { animation-delay: 370ms; }
-::view-transition-new(vt-r8):only-child { animation-delay: 405ms; }
-::view-transition-new(vt-print):only-child { animation-delay: 450ms; }
-::view-transition-new(vt-h1):only-child { animation-delay: 160ms; }
-::view-transition-new(vt-h2):only-child { animation-delay: 220ms; }
+::view-transition-new(vt-r4):only-child { animation-delay: 280ms; }
+::view-transition-new(vt-r5):only-child { animation-delay: 310ms; }
+::view-transition-new(vt-r6):only-child { animation-delay: 340ms; }
+::view-transition-new(vt-r7):only-child { animation-delay: 380ms; }
+::view-transition-new(vt-r8):only-child { animation-delay: 420ms; }
+::view-transition-new(vt-print):only-child { animation-delay: 460ms; }
+::view-transition-new(vt-h1):only-child { animation-delay: 140ms; }
+::view-transition-new(vt-h2):only-child { animation-delay: 200ms; }
 
-/* Everything unnamed (the blob, other pages) just dissolves. */
-::view-transition-old(root) { animation: vt-leave 220ms ease-out both; }
-::view-transition-new(root) { animation: vt-fade-in 360ms 80ms ease-out both; }
+/* Everything unnamed (the blob, other pages) is a straight cut. */
+::view-transition-old(root) { animation: none; opacity: 0; }
+::view-transition-new(root) { animation: none; }
 
-@keyframes vt-blur-out { to { opacity: 0; filter: blur(8px); } }
-@keyframes vt-blur-in { from { opacity: 0; filter: blur(8px); } }
-@keyframes vt-rise { from { opacity: 0; translate: 0 14px; filter: blur(6px); } }
-@keyframes vt-leave { to { opacity: 0; filter: blur(4px); } }
-@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-roll-out { to { translate: 0 -105%; } }
+@keyframes vt-roll-in { from { translate: 0 105%; } }
+@keyframes vt-wipe-in { from { clip-path: inset(0 0 100% 0); translate: 0 0.6em; } }
+@keyframes vt-wipe-out { to { clip-path: inset(0 0 100% 0); translate: 0 -0.4em; } }
 
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
