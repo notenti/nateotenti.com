@@ -235,6 +235,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .pairs dt { color: var(--muted); }
   .pairs dd { margin: 0; }
 
+  /* Sized in points for the printed page, which reads small on a monitor.
+     Scale the whole page up on wide screens; print and the PDF are untouched. */
+  @media screen and (min-width: 1000px) {
+    .resume { zoom: 1.12; }
+  }
+
   @media (max-width: 700px) {
     .resume { padding: 32px 20px 64px; font-size: 10pt; }
     header { grid-template-columns: 1fr; }
