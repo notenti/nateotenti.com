@@ -7,7 +7,7 @@ export default {
     extend: {
       fontFamily: {
         // One family for everything; hierarchy comes from size and weight.
-        sans: ['Allo', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Allo', 'Allo Fallback', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         // The grey scale, paper and ink come from CSS variables (src/styles/global.css)

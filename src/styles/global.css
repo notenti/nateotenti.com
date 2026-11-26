@@ -2,13 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Allo by Josh Puckett, SIL Open Font License (public/fonts/Allo-OFL.txt). Roundness stays at 0. */
+/* Allo by Josh Puckett, SIL Open Font License (public/fonts/Allo-OFL.txt).
+   AlloLatin.woff2 is AlloVariable cut down for the web: roundness pinned at its
+   default (50), only Latin glyphs kept (169 KB instead of 449 KB), and the
+   Hawaiian ʻokina (U+02BB) mapped to Allo's left quote, which it otherwise lacks. The full
+   file loads only if a page uses a character outside that range. Order matters:
+   where faces overlap the later one wins, so the subset comes second. */
 @font-face {
   font-family: 'Allo';
   src: url('/fonts/AlloVariable.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
+}
+@font-face {
+  font-family: 'Allo';
+  src: url('/fonts/AlloLatin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-017F, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2190-2193, U+2212, U+2215;
+}
+/* Arial scaled to Allo's widths and line metrics, so text doesn't shift when
+   Allo swaps in on a slow first visit. */
+@font-face {
+  font-family: 'Allo Fallback';
+  src: local('Arial'), local('ArialMT'), local('Helvetica');
+  size-adjust: 102%;
+  ascent-override: 94.97%;
+  descent-override: 23.65%;
+  line-gap-override: 0%;
 }
 
 /* Palette as RGB channels. Light by default; dark follows the system unless the
@@ -75,8 +98,49 @@
   :root:not([data-theme='light']) .theme-icon-moon { display: none; }
 }
 
+/* Links: a 1px rule draws in from the left on hover and leaves to the right.
+   .underlined keeps it drawn: links inside a sentence, and the current post. */
+.ink-link {
+  background: linear-gradient(currentColor, currentColor) no-repeat right bottom / 0 1px;
+  transition: background-size 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.ink-link.underlined,
+.ink-link:hover,
+.ink-link:focus-visible,
+a:hover .ink-link,
+a:focus-visible .ink-link,
+button:hover .ink-link {
+  background-position-x: left;
+  background-size: 100% 1px;
+}
+
+/* Buttons you press (icons, copy email): a soft disc on hover, a small give on press. */
+.press {
+  border-radius: 9999px;
+  transition: transform 120ms ease, background-color 150ms ease;
+}
+.press:hover { background-color: rgb(var(--neutral-100)); }
+.press:active { transform: scale(0.92); }
+
+/* The fixed corner icons sit on a paper disc, so scrolling text and photos
+   don't run through them. */
+:is(#theme-toggle, #resume-pdf, .blob-dismiss):not(:hover) {
+  background-color: rgb(var(--paper) / 0.85);
+}
+
+/* Keyboard focus in ink, not the browser's blue or orange. */
+:focus-visible {
+  outline: 1.5px solid rgb(var(--ink));
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-link, .press { transition: none; }
+}
+
 /* Nate's notes (Comment.astro): fold out over the content like a doc comment. */
 .comment-panel {
+  scroll-margin: 16px;
   translate: var(--nudge, 0px) 0;
   visibility: hidden;
   opacity: 0;
@@ -136,9 +200,6 @@
     @apply text-black;
   }
 
-  a {
-    @apply transition-colors duration-200;
-  }
 }
 
 @layer components {

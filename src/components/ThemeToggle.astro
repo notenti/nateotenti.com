@@ -7,12 +7,13 @@
 <button
   id="theme-toggle"
   type="button"
-  class="fixed bottom-4 right-4 z-40 p-2 rounded-full text-black hover:underline underline-offset-4 transition-colors"
+  class="fixed bottom-4 right-4 z-40 p-2 rounded-full text-black press"
   aria-label="Toggle dark mode"
 >
   <!-- Sun: shown in dark mode -->
-  <svg class="theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="4" />
+  <!-- Heavier stroke and a larger disc than the other icons: its thin rays otherwise read dimmer. -->
+  <svg class="theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.5" />
     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
   </svg>
   <!-- Moon: shown in light mode -->

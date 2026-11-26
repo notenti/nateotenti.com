@@ -12,8 +12,9 @@ const posts = (await getCollection('life', ({ data }) => !data.draft)).sort(
 
 const latestPost = posts[0];
 const { Content } = latestPost ? await latestPost.render() : { Content: null };
-const previousPost = null;
-const nextPost = posts.length > 1 ? posts[1] : null;
+// Posts run newest first, so the one after the latest is the next older one.
+const newerPost = null;
+const olderPost = posts.length > 1 ? posts[1] : null;
 
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
@@ -36,12 +37,12 @@ const formatDateLong = (date: Date) => {
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
-          <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+          <a href="/" class="text-sm font-medium text-black ink-link mb-2 inline-block">&larr; home</a>
           <h1 class="text-3xl font-[650] text-black tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
-          class="p-2 text-black hover:underline underline-offset-4 transition-colors"
+          class="press p-2 text-black"
           aria-label="Posts menu"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +58,7 @@ const formatDateLong = (date: Date) => {
         <div class="min-w-0 max-w-5xl">
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
-            <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+            <a href="/" class="text-sm font-medium text-black ink-link mb-2 inline-block">&larr; home</a>
             <h1 class="text-4xl font-[650] text-black tracking-tight">Life</h1>
             <p class="text-black mt-2">Photos and thoughts.</p>
           </header>
@@ -67,7 +68,7 @@ const formatDateLong = (date: Date) => {
           ) : (
             <article>
               <header class="mb-8">
-                <h2 class="text-2xl md:text-3xl font-semibold text-black mb-3">{latestPost.data.title}</h2>
+                <h2 class="text-2xl md:text-3xl font-semibold tracking-tight text-black mb-3">{latestPost.data.title}</h2>
                 <div class="flex flex-wrap items-center gap-3 text-sm text-black">
                   <time class="tabular-nums">{formatDateLong(latestPost.data.date)}</time>
                   <span class="text-black">·</span>
@@ -76,7 +77,7 @@ const formatDateLong = (date: Date) => {
               </header>
 
               {latestPost.data.intro && (
-                <p class="text-lg text-black leading-relaxed mb-10">
+                <p class="text-lg text-black leading-relaxed mb-10 max-w-2xl">
                   <NotedText text={latestPost.data.intro} />
                 </p>
               )}
@@ -85,23 +86,23 @@ const formatDateLong = (date: Date) => {
                 {Content && <Content />}
               </div>
 
-              <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
-                {previousPost && (
+              <div class="mt-16 pt-8 border-t border-neutral-200 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-sm font-medium text-black">
+                {olderPost && (
                   <>
-                    <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
-                      &larr; previous
+                    <a href={`/life/${olderPost.slug}`} class="text-black" title="Older post">
+                      &larr; <span class="ink-link">{olderPost.data.title}</span>
                     </a>
-                    <span class="text-black">·</span>
+                    <span>·</span>
                   </>
                 )}
-                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
-                  &uarr; back to top
+                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-black">
+                  &uarr; <span class="ink-link">back to top</span>
                 </a>
-                {nextPost && (
+                {newerPost && (
                   <>
-                    <span class="text-black">·</span>
-                    <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
-                      next &rarr;
+                    <span>·</span>
+                    <a href={`/life/${newerPost.slug}`} class="text-black" title="Newer post">
+                      <span class="ink-link">{newerPost.data.title}</span> &rarr;
                     </a>
                   </>
                 )}
@@ -111,8 +112,9 @@ const formatDateLong = (date: Date) => {
         </div>
 
         <!-- Desktop sidebar -->
-        <aside class="hidden lg:block pt-[7.5rem]">
-          <div>
+        <aside class="hidden lg:block pt-[8.5rem]">
+          <!-- Stays in view down a long album; scrolls on its own if the list outgrows the screen. -->
+          <div class="sticky top-8 max-h-[calc(100svh-4rem)] overflow-y-auto">
             <span class="text-sm font-medium text-black mb-4 block">Posts</span>
             <nav>
               <ul class="space-y-4">
@@ -126,8 +128,8 @@ const formatDateLong = (date: Date) => {
                         <Image
                           src={post.data.cover}
                           alt={post.data.title}
-                          width={200}
-                          height={150}
+                          width={480}
+                          height={360}
                           class="w-3/4 aspect-[4/3] object-cover rounded mb-2 border border-transparent group-hover:border-black transition-colors duration-200 ease-in-out"
                           loading="lazy"
                         />
@@ -136,8 +138,8 @@ const formatDateLong = (date: Date) => {
                         class:list={[
                           'font-medium',
                           index === 0
-                            ? 'text-black underline underline-offset-4'
-                            : 'text-black group-hover:underline underline-offset-4'
+                            ? 'text-black ink-link underlined'
+                            : 'text-black ink-link'
                         ]}
                       >
                         {post.data.title}
