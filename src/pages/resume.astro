@@ -139,8 +139,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     --rail: 1.18in;
     --gap: 0.28in;
     --ink: rgb(var(--ink));
-    --muted: rgb(var(--neutral-500));
-    --role: rgb(var(--neutral-600)); /* job titles: a step darker than dates and labels */
+    --muted: rgb(var(--neutral-600));
     --faint: rgb(var(--neutral-400));
 
     position: relative;
@@ -206,7 +205,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .what { min-width: 0; }
   .org { font-weight: 600; }
   .head, .school { display: flex; flex-wrap: wrap; column-gap: 0.5em; }
-  .head .role { color: var(--role); }
+  .head .role { color: var(--muted); }
 
   .what ul {
     margin: 0.04in 0 0;
@@ -260,8 +259,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     :global(#theme-toggle), #resume-pdf { display: none !important; }
     .resume {
       --ink: #171717;
-      --muted: #737373;
-      --role: #525252;
+      --muted: #525252;
       --faint: #a3a3a3;
       width: 8.5in;
       height: 11in;
