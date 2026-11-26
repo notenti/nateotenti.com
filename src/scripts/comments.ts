@@ -23,6 +23,12 @@ const setOpen = (btn: HTMLButtonElement, open: boolean) => {
     panel.style.setProperty('--nudge', `${nudge}px`);
   }
   panel.classList.toggle('is-open', open);
+  // And down: if the note opens past the bottom of the screen, bring it into view.
+  if (open) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Wait for it to finish folding out (150ms) so its full size is measured.
+    setTimeout(() => panel.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }), reduce ? 0 : 160);
+  }
 };
 const closeAll = (except?: HTMLButtonElement) =>
   toggles.forEach((b) => b !== except && isOpen(b) && setOpen(b, false));

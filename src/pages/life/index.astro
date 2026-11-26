@@ -12,8 +12,9 @@ const posts = (await getCollection('life', ({ data }) => !data.draft)).sort(
 
 const latestPost = posts[0];
 const { Content } = latestPost ? await latestPost.render() : { Content: null };
-const previousPost = null;
-const nextPost = posts.length > 1 ? posts[1] : null;
+// Posts run newest first, so the one after the latest is the next older one.
+const newerPost = null;
+const olderPost = posts.length > 1 ? posts[1] : null;
 
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-US', {
@@ -76,7 +77,7 @@ const formatDateLong = (date: Date) => {
               </header>
 
               {latestPost.data.intro && (
-                <p class="text-lg text-black leading-relaxed mb-10">
+                <p class="text-lg text-black leading-relaxed mb-10 max-w-2xl">
                   <NotedText text={latestPost.data.intro} />
                 </p>
               )}
@@ -85,23 +86,23 @@ const formatDateLong = (date: Date) => {
                 {Content && <Content />}
               </div>
 
-              <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
-                {previousPost && (
+              <div class="mt-16 pt-8 border-t border-neutral-200 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-sm font-medium text-black">
+                {olderPost && (
                   <>
-                    <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black ink-link">
-                      &larr; previous
+                    <a href={`/life/${olderPost.slug}`} class="text-black" title="Older post">
+                      &larr; <span class="ink-link">{olderPost.data.title}</span>
                     </a>
-                    <span class="text-black">·</span>
+                    <span>·</span>
                   </>
                 )}
-                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black ink-link">
-                  &uarr; back to top
+                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-black">
+                  &uarr; <span class="ink-link">back to top</span>
                 </a>
-                {nextPost && (
+                {newerPost && (
                   <>
-                    <span class="text-black">·</span>
-                    <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black ink-link">
-                      next &rarr;
+                    <span>·</span>
+                    <a href={`/life/${newerPost.slug}`} class="text-black" title="Newer post">
+                      <span class="ink-link">{newerPost.data.title}</span> &rarr;
                     </a>
                   </>
                 )}
@@ -136,7 +137,7 @@ const formatDateLong = (date: Date) => {
                         class:list={[
                           'font-medium',
                           index === 0
-                            ? 'text-black underline underline-offset-4'
+                            ? 'text-black ink-link underlined'
                             : 'text-black ink-link'
                         ]}
                       >

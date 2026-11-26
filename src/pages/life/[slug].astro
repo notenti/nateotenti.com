@@ -24,8 +24,9 @@ const allPosts = (await getCollection('life', ({ data }) => !data.draft)).sort(
 
 const currentSlug = post.slug;
 const currentPostIndex = allPosts.findIndex((item) => item.slug === currentSlug);
-const previousPost = currentPostIndex > 0 ? allPosts[currentPostIndex - 1] : null;
-const nextPost =
+// Posts run newest first: the one before this is newer, the one after is older.
+const newerPost = currentPostIndex > 0 ? allPosts[currentPostIndex - 1] : null;
+const olderPost =
   currentPostIndex >= 0 && currentPostIndex < allPosts.length - 1
     ? allPosts[currentPostIndex + 1]
     : null;
@@ -69,7 +70,7 @@ const formatDateLong = (date: Date) => {
 
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-12">
         <!-- Main content area -->
-        <div class="min-w-0">
+        <div class="min-w-0 max-w-5xl">
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
             <a href="/" class="text-sm font-medium text-black ink-link mb-2 inline-block">&larr; home</a>
@@ -88,7 +89,7 @@ const formatDateLong = (date: Date) => {
             </header>
 
             {post.data.intro && (
-              <p class="text-lg text-black leading-relaxed mb-10">
+              <p class="text-lg text-black leading-relaxed mb-10 max-w-2xl">
                 <NotedText text={post.data.intro} />
               </p>
             )}
@@ -97,23 +98,23 @@ const formatDateLong = (date: Date) => {
               <Content />
             </div>
 
-            <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
-              {previousPost && (
+            <div class="mt-16 pt-8 border-t border-neutral-200 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-sm font-medium text-black">
+              {olderPost && (
                 <>
-                  <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black ink-link">
-                    &larr; previous
+                  <a href={`/life/${olderPost.slug}`} class="text-black" title="Older post">
+                    &larr; <span class="ink-link">{olderPost.data.title}</span>
                   </a>
-                  <span class="text-black">·</span>
+                  <span>·</span>
                 </>
               )}
-              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black ink-link">
-                &uarr; back to top
+              <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-black">
+                &uarr; <span class="ink-link">back to top</span>
               </a>
-              {nextPost && (
+              {newerPost && (
                 <>
-                  <span class="text-black">·</span>
-                  <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black ink-link">
-                    next &rarr;
+                  <span>·</span>
+                  <a href={`/life/${newerPost.slug}`} class="text-black" title="Newer post">
+                    <span class="ink-link">{newerPost.data.title}</span> &rarr;
                   </a>
                 </>
               )}
@@ -147,7 +148,7 @@ const formatDateLong = (date: Date) => {
                         class:list={[
                           'font-medium',
                           postItem.slug === currentSlug
-                            ? 'text-black underline underline-offset-4'
+                            ? 'text-black ink-link underlined'
                             : 'text-black ink-link'
                         ]}
                       >

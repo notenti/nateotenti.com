@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage, inferRemoteSize } from 'astro:assets';
 import Comment from './Comment.astro';
 
 interface Props {
@@ -14,9 +14,20 @@ interface Props {
 
 const { src, alt = '', caption, comment, aspect = 'auto', class: className = '' } = Astro.props;
 
-// Map aspect prop to CSS aspect ratio
+// Width over height for each aspect; 'auto' uses the photo's own.
+const ratios: Record<string, number> = {
+  'landscape': 3 / 2,
+  'portrait': 2 / 3,
+  'square': 1,
+  '16:9': 16 / 9,
+  '4:3': 4 / 3,
+  '3:2': 3 / 2,
+  '2:3': 2 / 3,
+  '3:4': 3 / 4,
+};
+
 const aspectClasses: Record<string, string> = {
-  'auto': '', // Will use natural dimensions from inferSize
+  'auto': '',
   'landscape': 'aspect-[3/2]',
   'portrait': 'aspect-[2/3]',
   'square': 'aspect-square',
@@ -29,22 +40,38 @@ const aspectClasses: Record<string, string> = {
 
 const aspectClass = aspectClasses[aspect] || '';
 const useObjectCover = aspect !== 'auto';
+
+const { width, height } = await inferRemoteSize(src);
+const ratio = ratios[aspect] ?? width / height;
+// Widest the photo may be before it would get taller than 88% of the screen.
+const cap = `${(88 * ratio).toFixed(2)}vh`;
+
+// The column is at most 1024px wide; serve sizes up to 2x that, never above the original.
+const widths = [640, 1024, 1600, 2048].filter((w) => w < width).concat(Math.min(width, 2400));
+// The lightbox shows a larger copy than the column needs.
+const fullWidth = Math.min(width, 2400);
+const full = await getImage({ src, width: fullWidth, height: Math.round((fullWidth * height) / width), format: 'webp' });
 ---
 
-<figure class={`photo-container relative m-0 ${className}`}>
+<!-- Never taller than most of the screen: tall photos narrow and center instead. -->
+<figure class={`photo-container relative m-0 mx-auto w-full ${className}`} style={`max-width: ${cap.replace('vh', 'svh')}`}>
   {comment && <Comment note={comment} variant="photo" class="absolute right-2 top-2 z-10" />}
   <div class:list={['photo-wrapper relative rounded-sm overflow-hidden bg-neutral-200', aspectClass]}>
     <div class="photo-skeleton absolute inset-0 bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 bg-[length:200%_100%] animate-shimmer pointer-events-none" />
     <Image
       src={src}
       alt={alt}
-      inferSize
+      width={width}
+      height={height}
+      widths={widths}
+      sizes={`min(${cap}, 100vw, 1024px)`}
+      data-full={full.src}
       class:list={[
         'photo-image w-full rounded-sm lightbox-trigger cursor-zoom-in',
         aspectClass,
         useObjectCover ? 'object-cover' : ''
       ]}
-      loading="eager"
+      loading="lazy"
     />
   </div>
   {caption && (

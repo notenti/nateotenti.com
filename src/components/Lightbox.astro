@@ -25,7 +25,8 @@
     var target = e.target;
     if (target && target.classList && target.classList.contains('lightbox-trigger')) {
       e.preventDefault();
-      lightboxImg.src = target.currentSrc || target.src;
+      // Photos carry a full-size URL; the inline image is sized for the column.
+      lightboxImg.src = target.dataset.full || target.currentSrc || target.src;
       lightboxImg.alt = target.alt || '';
       lightbox.showModal();
     }
