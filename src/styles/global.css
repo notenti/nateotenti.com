@@ -4,7 +4,8 @@
 
 /* Allo by Josh Puckett, SIL Open Font License (public/fonts/Allo-OFL.txt).
    AlloLatin.woff2 is AlloVariable cut down for the web: roundness pinned at its
-   default (50) and only Latin glyphs kept, 169 KB instead of 449 KB. The full
+   default (50), only Latin glyphs kept (169 KB instead of 449 KB), and the
+   Hawaiian ʻokina (U+02BB) mapped to Allo's left quote, which it otherwise lacks. The full
    file loads only if a page uses a character outside that range. Order matters:
    where faces overlap the later one wins, so the subset comes second. */
 @font-face {

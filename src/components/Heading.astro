@@ -14,7 +14,15 @@ const { id, location, href, subtext, class: className } = Astro.props;
 // Get the slot content for auto-generating ID if not provided
 const slotContent = await Astro.slots.render('default');
 const textContent = slotContent.replace(/<[^>]*>/g, '').trim();
-const slug = id || textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+// Drop diacritics and the ʻokina first, so "Haleakalā" becomes haleakala, not haleakal.
+const slug =
+  id ||
+  textContent
+    .normalize('NFD')
+    .replace(/[̀-ͯʻʼ'’]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 ---
 
 <div id={slug} class:list={["!mt-12 !mb-4 flex items-start gap-3 group scroll-mt-8", className]}>
