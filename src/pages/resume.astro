@@ -136,19 +136,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   /* One Letter page. A narrow left rail carries when/where; the wide column
      carries the work. Hierarchy from weight, not color or rules. */
   .resume {
-    --rail: 1.18in;
-    --gap: 0.28in;
+    /* On screen the type uses the site's sizes; print swaps in the point sizes
+       that fit one Letter page. Spacing is in inches, scaled by --k so it keeps
+       the same proportions to the type in both. */
+    --body: 14px;
+    --name: 36px;
+    --thesis: 16px;
+    --section: 16px;
+    --k: 1.18;
+    --rail: calc(1.18in * var(--k));
+    --gap: calc(0.28in * var(--k));
     --ink: rgb(var(--ink));
     --muted: rgb(var(--neutral-600));
     --faint: rgb(var(--neutral-400));
 
     position: relative;
-    width: 8.5in;
+    width: calc(8.5in * var(--k));
     max-width: 100%;
     margin: 0 auto;
-    padding: 0.48in 0.6in 0.4in;
+    padding: calc(0.48in * var(--k)) calc(0.6in * var(--k)) calc(0.4in * var(--k));
     color: var(--ink);
-    font-size: 8.9pt;
+    font-size: var(--body);
     line-height: 1.35;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
@@ -160,19 +168,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     grid-template-columns: 1fr auto;
     gap: var(--gap);
     align-items: end;
-    padding-bottom: 0.08in;
+    padding-bottom: calc(0.08in * var(--k));
   }
   h1 {
-    font-size: 25pt;
+    font-size: var(--name);
     font-weight: 650;
     letter-spacing: -0.025em;
     line-height: 1;
-    margin: 0 0 0.12in;
+    margin: 0 0 calc(0.12in * var(--k));
   }
   .thesis {
     margin: 0;
-    max-width: 4.6in;
-    font-size: 10pt;
+    max-width: calc(4.6in * var(--k));
+    font-size: var(--thesis);
     line-height: 1.4;
     text-wrap: pretty;
   }
@@ -184,21 +192,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     line-height: 1.5;
   }
 
-  section { padding-top: 0.17in; }
+  section { padding-top: calc(0.17in * var(--k)); }
   h2 {
-    margin: 0 0 0.09in;
-    font-size: 10.5pt;
+    margin: 0 0 calc(0.09in * var(--k));
+    font-size: var(--section);
     font-weight: 600;
   }
-  .entries { display: grid; gap: 0.11in; min-width: 0; margin: 0; }
-  .schools { gap: 0.02in; }
+  .entries { display: grid; gap: calc(0.11in * var(--k)); min-width: 0; margin: 0; }
+  .schools { gap: calc(0.02in * var(--k)); }
 
   .job {
     display: grid;
     grid-template-columns: var(--rail) 1fr;
     column-gap: var(--gap);
   }
-  .job.promo { margin-top: -0.04in; }
+  .job.promo { margin-top: -calc(0.04in * var(--k)); }
   .when { color: var(--muted); }
   .when span { display: block; }
   .what { min-width: 0; }
@@ -207,45 +215,39 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .head .role { color: var(--muted); }
 
   .what ul {
-    margin: 0.04in 0 0;
+    margin: calc(0.04in * var(--k)) 0 0;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 0.035in;
+    gap: calc(0.035in * var(--k));
   }
   .what li {
     position: relative;
-    padding-left: 0.16in;
+    padding-left: calc(0.16in * var(--k));
     text-wrap: pretty;
   }
   .what li::before {
     content: '';
     position: absolute;
-    left: 0.02in;
+    left: calc(0.02in * var(--k));
     top: 0.62em;
-    width: 0.06in;
+    width: calc(0.06in * var(--k));
     height: 1px;
     background: var(--faint);
   }
   b { font-weight: 600; }
 
-  .pairs { gap: 0.04in; }
+  .pairs { gap: calc(0.04in * var(--k)); }
   .pairs div { display: grid; grid-template-columns: var(--rail) 1fr; column-gap: var(--gap); }
   .pairs dt { color: var(--muted); }
   .pairs dd { margin: 0; }
 
-  /* Sized in points for the printed page, which reads small on a monitor.
-     Scale the whole page up on wide screens; print and the PDF are untouched. */
-  @media screen and (min-width: 1000px) {
-    .resume { zoom: 1.12; }
-  }
-
   @media (max-width: 700px) {
-    .resume { padding: 32px 20px 64px; font-size: 10pt; }
+    .resume { padding: 32px 20px 64px; }
     header { grid-template-columns: 1fr; }
     .contact { text-align: left; }
     .job, .pairs div { grid-template-columns: 1fr; }
-    .schools { gap: 0.11in; }
+    .schools { gap: calc(0.11in * var(--k)); }
     .when span { display: inline; }
     .when span + span::before { content: ' · '; }
   }
@@ -257,6 +259,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     :global(body) { background: #fff !important; }
     :global(#theme-toggle), #resume-pdf { display: none !important; }
     .resume {
+      --body: 8.9pt;
+      --name: 25pt;
+      --thesis: 10pt;
+      --section: 10.5pt;
+      --k: 1;
       --ink: #171717;
       --muted: #525252;
       --faint: #a3a3a3;
