@@ -19,37 +19,37 @@ import BouncingCircle from '../components/BouncingCircle.astro';
 
       <div class="w-full sm:w-fit relative">
         <nav id="nav-bar" class="flex flex-wrap justify-between gap-x-2 gap-y-3 sm:justify-start sm:gap-8 text-sm font-medium">
-          <a href="https://github.com/notenti" target="_blank" rel="noopener noreferrer" class="text-black hover:underline underline-offset-4 inline-flex items-center gap-1">
-            github
+          <a href="https://github.com/notenti" target="_blank" rel="noopener noreferrer" class="text-black inline-flex items-center gap-1">
+            <span class="ink-link">github</span>
             <svg class="w-2 h-2 text-neutral-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 8L8 2M8 2H3.5M8 2v4.5" />
             </svg>
           </a>
-          <a href="https://www.linkedin.com/in/nathan-otenti/" target="_blank" rel="noopener noreferrer" class="text-black hover:underline underline-offset-4 inline-flex items-center gap-1">
-            linkedin
+          <a href="https://www.linkedin.com/in/nathan-otenti/" target="_blank" rel="noopener noreferrer" class="text-black inline-flex items-center gap-1">
+            <span class="ink-link">linkedin</span>
             <svg class="w-2 h-2 text-neutral-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 8L8 2M8 2H3.5M8 2v4.5" />
             </svg>
           </a>
           <button
             id="copy-email"
-            class="text-black hover:underline underline-offset-4 transition-colors relative cursor-pointer inline-flex items-center gap-1"
+            class="text-black relative cursor-pointer inline-flex items-center gap-1"
             data-email="otenti.nate@gmail.com"
           >
-            email
+            <span class="ink-link">email</span>
             <svg class="w-2 h-2 text-neutral-400" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="6" height="6" rx="0.5" />
               <path d="M3 7H1.5a.5.5 0 01-.5-.5V1.5a.5.5 0 01.5-.5H6a.5.5 0 01.5.5V3" />
             </svg>
             <span
               id="copy-toast"
-              class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-300 translate-y-2"
+              class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-xs rounded bg-black text-white whitespace-nowrap opacity-0 pointer-events-none transition-all duration-150 translate-y-1"
             >
               copied!
             </span>
           </button>
-          <a href="/resume" class="text-black hover:underline underline-offset-4">resume</a>
-          <a href="/life" class="text-black hover:underline underline-offset-4">life</a>
+          <a href="/resume" class="text-black"><span class="ink-link">resume</span></a>
+          <a href="/life" class="text-black"><span class="ink-link">life</span></a>
         </nav>
       </div>
     </div>
@@ -68,7 +68,7 @@ import BouncingCircle from '../components/BouncingCircle.astro';
     clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateX(-50%) translateY(0.5rem)';
+      toast.style.transform = 'translateX(-50%) translateY(0.25rem)';
     }, 1500);
   });
 </script>

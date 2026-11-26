@@ -36,12 +36,12 @@ const formatDateLong = (date: Date) => {
       <!-- Mobile header with hamburger -->
       <header class="lg:hidden mb-8 flex items-center justify-between">
         <div>
-          <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+          <a href="/" class="text-sm font-medium text-black ink-link mb-2 inline-block">&larr; home</a>
           <h1 class="text-3xl font-[650] text-black tracking-tight">Life</h1>
         </div>
         <button
           id="mobile-menu-toggle"
-          class="p-2 text-black hover:underline underline-offset-4 transition-colors"
+          class="press p-2 text-black"
           aria-label="Posts menu"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +57,7 @@ const formatDateLong = (date: Date) => {
         <div class="min-w-0 max-w-5xl">
           <!-- Desktop header -->
           <header class="hidden lg:block mb-8">
-            <a href="/" class="text-sm font-medium text-black hover:underline underline-offset-4 mb-2 inline-block">&larr; home</a>
+            <a href="/" class="text-sm font-medium text-black ink-link mb-2 inline-block">&larr; home</a>
             <h1 class="text-4xl font-[650] text-black tracking-tight">Life</h1>
             <p class="text-black mt-2">Photos and thoughts.</p>
           </header>
@@ -88,19 +88,19 @@ const formatDateLong = (date: Date) => {
               <div class="mt-16 pt-8 border-t border-neutral-200 flex items-center justify-center gap-2">
                 {previousPost && (
                   <>
-                    <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
+                    <a href={`/life/${previousPost.slug}`} class="text-sm font-medium text-black ink-link">
                       &larr; previous
                     </a>
                     <span class="text-black">·</span>
                   </>
                 )}
-                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
+                <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-sm font-medium text-black ink-link">
                   &uarr; back to top
                 </a>
                 {nextPost && (
                   <>
                     <span class="text-black">·</span>
-                    <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black hover:underline underline-offset-4 transition-colors">
+                    <a href={`/life/${nextPost.slug}`} class="text-sm font-medium text-black ink-link">
                       next &rarr;
                     </a>
                   </>
@@ -137,7 +137,7 @@ const formatDateLong = (date: Date) => {
                           'font-medium',
                           index === 0
                             ? 'text-black underline underline-offset-4'
-                            : 'text-black group-hover:underline underline-offset-4'
+                            : 'text-black ink-link'
                         ]}
                       >
                         {post.data.title}
