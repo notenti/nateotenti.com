@@ -123,7 +123,7 @@ const formatDateLong = (date: Date) => {
         </div>
 
         <!-- Desktop sidebar -->
-        <aside class="hidden lg:block pt-[7.5rem]">
+        <aside class="hidden lg:block pt-[8.5rem]">
           <!-- Stays in view down a long album; scrolls on its own if the list outgrows the screen. -->
           <div class="sticky top-8 max-h-[calc(100svh-4rem)] overflow-y-auto">
             <span class="text-sm font-medium text-black mb-4 block">Posts</span>
@@ -139,8 +139,8 @@ const formatDateLong = (date: Date) => {
                         <Image
                           src={postItem.data.cover}
                           alt={postItem.data.title}
-                          width={200}
-                          height={150}
+                          width={480}
+                          height={360}
                           class="w-3/4 aspect-[4/3] object-cover rounded mb-2 border border-transparent group-hover:border-black transition-colors duration-200 ease-in-out"
                           loading="lazy"
                         />

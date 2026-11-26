@@ -30,9 +30,9 @@ const slug = id || textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace
   </div>
   <div class="flex flex-col gap-0.5">
     <h2 class="text-xl font-semibold text-black tracking-tight leading-tight">
-      <a href={`#${slug}`}>
+      <a href={`#${slug}`} class="group/title">
         <span class="ink-link" set:html={slotContent} />
-        <span class="opacity-0 group-hover:opacity-100 transition-opacity text-black ml-2 text-base font-normal">#</span>
+        <span class="opacity-0 group-hover/title:opacity-100 group-focus-visible/title:opacity-100 transition-opacity text-black ml-2 text-base font-normal">#</span>
       </a>
     </h2>
     {location && (

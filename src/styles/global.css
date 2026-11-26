@@ -121,6 +121,18 @@ button:hover .ink-link {
 .press:hover { background-color: rgb(var(--neutral-100)); }
 .press:active { transform: scale(0.92); }
 
+/* The fixed corner icons sit on a paper disc, so scrolling text and photos
+   don't run through them. */
+:is(#theme-toggle, #resume-pdf, .blob-dismiss):not(:hover) {
+  background-color: rgb(var(--paper) / 0.85);
+}
+
+/* Keyboard focus in ink, not the browser's blue or orange. */
+:focus-visible {
+  outline: 1.5px solid rgb(var(--ink));
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ink-link, .press { transition: none; }
 }
