@@ -105,7 +105,7 @@ rclone sync ./photos r2:nateotenti-images/albums/album-name/
 ### Styling
 
 - Tailwind with custom theme in `tailwind.config.mjs`
-- Font: Allo for everything (self-hosted in `public/fonts/`, OFL). Hierarchy comes from weight and size: display titles 650, post and section titles 600, nav and labels 500, body and dates 400 (dates use `tabular-nums`)
+- Font: Allo for everything (self-hosted in `public/fonts/`, OFL). Hierarchy comes from weight and size: display titles 650, post and section titles 600, nav and labels 500, body and dates 400 (dates use `tabular-nums`). Tracking: tight (-0.025em, `tracking-tight`) on anything 20px and up, normal below. Bold inside prose is 600
 - Palette: monochrome neutral greys; `accent` is ink (#171717)
 - Mobile-first responsive design
 
