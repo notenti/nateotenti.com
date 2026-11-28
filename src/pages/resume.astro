@@ -6,7 +6,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 // blocks are the long version: hidden until the corner toggle opens them, and
 // never printed.
 const thesis =
-  'Senior software engineer who builds developer platforms: the agents, test infrastructure, and APIs that whole engineering orgs work through. Most recently, an AI software factory at NVIDIA and the hardware test platform at Block.';
+  'Senior software engineer who builds developer platforms: the agents, test infrastructure, and APIs that whole engineering orgs work through. Most recently, a founding engineer of NVIDIA’s AI software factory and lead engineer for Square’s hardware test platform.';
 ---
 
 <BaseLayout
@@ -71,13 +71,17 @@ const thesis =
           <div class="what">
             <div class="head"><span class="org">NVIDIA</span><span class="role">Senior Software Engineer, Datacenter App Engineering</span></div>
             <ul>
-              <li>Build and scale the AI software factory behind Vera Rubin NVL72 development: the agents, tooling, knowledge base, and system access that <b>50+ engineers</b> share. It saves about <b>800 developer hours a month</b>.</li>
-              <li>Own the evals that decide whether agent work is good enough to land. They score agent-written changelists against human ones on quality, cost, and runtime every day. The platform now produces valid, researched changelists in about <b>15 minutes</b>.</li>
-              <li>Designed the environment the agents work in: on-demand Kubernetes workspaces with ZFS snapshots, and MCP integrations into Confluence, ticketing, and other internal systems.</li>
-              <li>Own the platform end to end, from architecture to observability. Share on-call and bring the platform to new teams.</li>
+              <li>Founding engineer and architect of the AI software factory behind Vera Rubin NVL72 development: the agents, tooling, knowledge base, and system access that <b>50+ engineers</b> share. Other orgs are now adopting it.</li>
+              <li>Its agents pick up incoming bug tickets and propose fixes, turning about a day of research and coding into a valid changelist in about <b>15 minutes</b>. That saves an estimated <b>800 developer hours a month</b>.</li>
+              <li>Designed and own the evals: real bugs replayed against a depot and tools rolled back to the day each was filed, with the agent’s fix judged against the one a human shipped on quality, cost, and runtime.</li>
+              <li>Built on-demand Kubernetes workspaces with ZFS snapshots for the agents, and MCP integrations into Confluence, ticketing, and other internal systems. Share on-call.</li>
             </ul>
             <div class="detail">
-              <p><span class="label">Scope</span> Architecture, CI/CD, the Markdown knowledge base agents read from, Slack integration, and Prometheus/Grafana observability. Python and TypeScript.</p>
+              <p><span class="label">How it works</span> Engineers file bugs the way they always have. The agents pick up incoming tickets, research them against a Markdown knowledge base and live access to internal systems, and propose a changelist. Each agent works in its own Kubernetes workspace, cloned from a ZFS snapshot.</p>
+              <p><span class="label">Evals</span> The hard question with agents is whether they’re actually any good. We answer it with history. Take a bug a human already fixed, rewind the Perforce depot to the moment it was filed, and date-lock every tool the agent can reach so it can’t see the answer. Then let the agent solve it, and judge its changelist against the human one on quality, cost, and runtime. This runs every day.</p>
+              <p><span class="label">What they taught us</span> Context mattered more than the model. The biggest gains came from what the agents could read and reach: the knowledge base and system access. The same daily runs guide our cost and runtime tradeoffs, and catch changes that quietly make the agents worse.</p>
+              <p><span class="label">My part</span> Founding engineer. I designed the overall architecture and the eval system, and work across the stack in Python and TypeScript, including CI/CD, Slack integration, and Prometheus/Grafana observability.</p>
+              <p><span class="label">Reach</span> Other orgs at NVIDIA are adopting the platform, and leadership points to it as a model for building with AI. The 800 hours is an estimate: tickets the agents handle, times the typical time each takes an engineer by hand.</p>
             </div>
           </div>
         </div>
@@ -87,14 +91,17 @@ const thesis =
           <div class="what">
             <div class="head"><span class="org">Block</span><span class="role">Senior Software Engineer, Developer Experience</span></div>
             <ul>
-              <li>Lead engineer for the software layer of Square’s hardware test platform, which runs <b>thousands of tests a day</b>. Designed the single documented API that <b>20+ hardware products</b> test against.</li>
-              <li>Led AI adoption across the hardware org. Used LLMs and test data to automate device recovery, speed up test-failure triage, and ground the org’s testing strategy in data.</li>
-              <li>Modernized Python tooling across the hardware org, saving about <b>65 machine hours a day</b>.</li>
+              <li>Lead engineer for the software layer of Square’s hardware test platform, which runs <b>thousands of tests a day</b>. Owned and extended its documented API across <b>20+ hardware products</b>, and set its direction.</li>
+              <li>Set the hardware org’s Python tooling standard and led the move to it, saving about <b>65 machine hours a day</b>.</li>
               <li>Built the Python CLI engineers use to configure, debug, and collect metrics from test hardware, so devices can be recovered remotely.</li>
-              <li>Designed and maintained the Android Trade Federation platform behind large-scale automated mobile testing.</li>
+              <li>Designed the Android Trade Federation platform behind large-scale automated mobile testing, and set its roadmap.</li>
             </ul>
             <div class="detail">
-              <p><span class="label">Scope</span> Hardware test infrastructure for Square’s device lineup, used across the hardware org. Python, Kotlin, Android.</p>
+              <p><span class="label">The platform</span> More than 20 Square hardware products are tested through it, thousands of times a day. I inherited its API, extended it as more products came on, and kept it one documented interface.</p>
+              <p><span class="label">Direction</span> Set the technical direction for three things the hardware org builds on: the test API, its Python tooling standard, and the Android Trade Federation platform.</p>
+              <p><span class="label">Tooling</span> The 65 machine hours a day came from faster tooling: modern Python packaging and environments across the org’s test code. The CLI lets engineers configure, debug, and recover test devices without being in the room with them.</p>
+              <p><span class="label">AI</span> Championed LLM workflows for test-failure triage and device recovery in the hardware org, through conversations and examples rather than a shipped system.</p>
+              <p><span class="label">Stack</span> Python, Kotlin, Android.</p>
             </div>
           </div>
         </div>
