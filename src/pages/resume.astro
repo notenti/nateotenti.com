@@ -2,14 +2,35 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 // The one-page resume. This page is the source of truth: after editing it, run
-// `npm run resume:pdf` to regenerate public/resume.pdf from it.
+// `npm run resume:pdf` to regenerate public/resume.pdf from it. The .detail
+// blocks are the long version: hidden until the corner toggle opens them, and
+// never printed.
+const thesis =
+  'Senior software engineer who builds developer platforms: the agents, test infrastructure, and APIs that whole engineering orgs work through. Most recently, an AI software factory at NVIDIA and the hardware test platform at Block.';
 ---
 
 <BaseLayout
   title="Nate Otenti · Resume"
-  description="Senior software engineer who builds the tools other engineers work in: agent platforms, test infrastructure, and the CLIs and APIs around them."
+  description={thesis}
 >
-  <!-- Sits just left of the theme toggle, in its style. -->
+  <!-- The corner buttons, in the theme toggle's style: detail, then PDF, then theme. -->
+  <button
+    id="resume-detail"
+    type="button"
+    class="fixed bottom-4 right-20 z-40 p-2 rounded-full text-black press"
+    aria-pressed="false"
+    aria-label="Show the detailed resume"
+    title="Show the detailed resume"
+  >
+    <!-- Unfold: shown while collapsed -->
+    <svg class="detail-icon-open w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
+    </svg>
+    <!-- Fold: shown while expanded -->
+    <svg class="detail-icon-close w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7 20l5-5 5 5M7 4l5 5 5-5" />
+    </svg>
+  </button>
   <a
     id="resume-pdf"
     href="/resume.pdf"
@@ -24,16 +45,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </svg>
   </a>
 
-  <article class="resume">
+  <article class="resume" id="resume">
 
     <header>
       <div>
         <h1>Nate Otenti</h1>
-        <p class="thesis">Senior software engineer who builds the tools other engineers work in: agent platforms, test infrastructure, and the CLIs and APIs around them.</p>
+        <p class="thesis">{thesis}</p>
       </div>
       <ul class="contact">
         <li><a class="ink-link" href="mailto:otenti.nate@gmail.com">otenti.nate@gmail.com</a></li>
-        <li>(508) 320-0804</li>
+        <!-- Phone is for the PDF only, so it isn't scraped off the public page. -->
+        <li class="print-only">(508) 320-0804</li>
         <li>Boston, MA</li>
         <li><a class="ink-link" href="https://nateotenti.com">nateotenti.com</a> · <a class="ink-link" href="https://github.com/notenti">github.com/notenti</a></li>
         <li><a class="ink-link" href="https://www.linkedin.com/in/nathan-otenti/">linkedin.com/in/nathan-otenti</a></li>
@@ -49,11 +71,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="what">
             <div class="head"><span class="org">NVIDIA</span><span class="role">Senior Software Engineer, Datacenter App Engineering</span></div>
             <ul>
-              <li>Build and scale an internal AI software factory for Vera Rubin NVL72 development. <b>50+ engineers</b> share its agents, tooling, knowledge base, and system access, and it saves about <b>800 developer hours a month</b>.</li>
-              <li>Led the daily evals that score agent-written changelists against human ones on quality, cost, and runtime. The platform now produces valid, researched changelists in about <b>15 minutes</b>.</li>
-              <li>Built on-demand developer workspaces on Kubernetes with ZFS snapshots, and MCP integrations that connect agents to Confluence, ticketing, and other internal services.</li>
-              <li>Work across the stack in Python and TypeScript: architecture, CI/CD, the Markdown knowledge base, Slack integration, and Prometheus/Grafana observability. Share on-call and pitch the platform to new teams.</li>
+              <li>Build and scale the AI software factory behind Vera Rubin NVL72 development: the agents, tooling, knowledge base, and system access that <b>50+ engineers</b> share. It saves about <b>800 developer hours a month</b>.</li>
+              <li>Own the evals that decide whether agent work is good enough to land. They score agent-written changelists against human ones on quality, cost, and runtime every day. The platform now produces valid, researched changelists in about <b>15 minutes</b>.</li>
+              <li>Designed the environment the agents work in: on-demand Kubernetes workspaces with ZFS snapshots, and MCP integrations into Confluence, ticketing, and other internal systems.</li>
+              <li>Own the platform end to end, from architecture to observability. Share on-call and bring the platform to new teams.</li>
             </ul>
+            <div class="detail">
+              <p><span class="label">Scope</span> Architecture, CI/CD, the Markdown knowledge base agents read from, Slack integration, and Prometheus/Grafana observability. Python and TypeScript.</p>
+            </div>
           </div>
         </div>
 
@@ -62,12 +87,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="what">
             <div class="head"><span class="org">Block</span><span class="role">Senior Software Engineer, Developer Experience</span></div>
             <ul>
-              <li>Lead engineer for the software interface to Square’s hardware test platform, which runs <b>thousands of tests a day</b>. Designed one documented API across <b>20+ hardware products</b>.</li>
+              <li>Lead engineer for the software layer of Square’s hardware test platform, which runs <b>thousands of tests a day</b>. Designed the single documented API that <b>20+ hardware products</b> test against.</li>
+              <li>Led AI adoption across the hardware org. Used LLMs and test data to automate device recovery, speed up test-failure triage, and ground the org’s testing strategy in data.</li>
               <li>Modernized Python tooling across the hardware org, saving about <b>65 machine hours a day</b>.</li>
-              <li>Built a Python CLI to configure, debug, and collect metrics from test hardware, so devices can be recovered remotely.</li>
-              <li>Designed and maintained an Android Trade Federation platform for large-scale automated mobile testing.</li>
-              <li>Led AI adoption in the hardware org, using LLMs and data analysis to automate device recovery, speed up test-failure triage, and shape a data-driven testing strategy.</li>
+              <li>Built the Python CLI engineers use to configure, debug, and collect metrics from test hardware, so devices can be recovered remotely.</li>
+              <li>Designed and maintained the Android Trade Federation platform behind large-scale automated mobile testing.</li>
             </ul>
+            <div class="detail">
+              <p><span class="label">Scope</span> Hardware test infrastructure for Square’s device lineup, used across the hardware org. Python, Kotlin, Android.</p>
+            </div>
           </div>
         </div>
 
@@ -76,8 +104,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="what">
             <div class="head"><span class="org">Motional</span><span class="role">Senior Software Engineer, Backend</span></div>
             <ul>
-              <li>Led the move of a company-wide dashboard to serverless AWS microservices, cutting maintenance overhead.</li>
-              <li>Redesigned the DynamoDB schema, <b>doubling query speed</b> and cutting error rates.</li>
+              <li>Led the move of a company-wide dashboard to serverless AWS microservices, and redesigned its DynamoDB schema to <b>double query speed</b>.</li>
             </ul>
           </div>
         </div>
@@ -97,8 +124,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="what">
             <div class="head"><span class="org">Aurora Flight Sciences</span><span class="role">Software Engineer</span></div>
             <ul>
-              <li>Developed flight-critical autonomy software in Python and C++11 for emergency landing and route planning.</li>
-              <li>Built a GitLab CI/CD pipeline on Docker that made software delivery <b>10× faster</b>.</li>
+              <li>Developed flight-critical autonomy software for emergency landing and route planning in Python and C++11. Built a Docker-based GitLab CI/CD pipeline that made delivery <b>10× faster</b>.</li>
             </ul>
           </div>
         </div>
@@ -123,14 +149,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <section>
       <h2>Toolkit</h2>
       <dl class="entries pairs">
+        <div><dt>AI and agents</dt><dd>Agent platforms, evals, MCP integrations, LLM knowledge bases</dd></div>
         <div><dt>Languages</dt><dd>Python, TypeScript, Go, Kotlin, C++</dd></div>
         <div><dt>Infrastructure</dt><dd>Kubernetes, ZFS, PostgreSQL, AWS, Docker, Terraform, GitHub Actions, Prometheus, Grafana</dd></div>
-        <div><dt>AI and agents</dt><dd>Agent evals, MCP, LLM knowledge bases</dd></div>
         <div><dt>Off the clock</dt><dd>Gardening, pizza-making, yoga, disc golf, <i>Survivor</i>, poodles</dd></div>
       </dl>
     </section>
   </article>
 </BaseLayout>
+
+<script>
+  // The detail toggle. #detail in the URL opens it, so the long version can be linked.
+  const btn = document.getElementById('resume-detail') as HTMLButtonElement;
+  const resume = document.getElementById('resume')!;
+  const set = (open: boolean) => {
+    resume.classList.toggle('detailed', open);
+    btn.setAttribute('aria-pressed', String(open));
+    const label = open ? 'Show the short resume' : 'Show the detailed resume';
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+    history.replaceState(null, '', open ? '#detail' : location.pathname + location.search);
+  };
+  if (location.hash === '#detail') set(true);
+  btn.addEventListener('click', () => set(!resume.classList.contains('detailed')));
+</script>
 
 <style>
   /* One Letter page. A narrow left rail carries when/where; the wide column
@@ -206,7 +248,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     grid-template-columns: var(--rail) 1fr;
     column-gap: var(--gap);
   }
-  .job.promo { margin-top: -calc(0.04in * var(--k)); }
+  .job.promo { margin-top: calc(-0.04in * var(--k)); }
   .when { color: var(--muted); }
   .when span { display: block; }
   .what { min-width: 0; }
@@ -242,6 +284,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .pairs dt { color: var(--muted); }
   .pairs dd { margin: 0; }
 
+  /* The detailed view: the long version of each job, opened by the corner toggle. */
+  .detail { display: none; margin-top: calc(0.08in * var(--k)); }
+  .resume.detailed .detail { display: grid; gap: calc(0.06in * var(--k)); }
+  .detail p { margin: 0; text-wrap: pretty; }
+  .detail .label { color: var(--muted); margin-right: 0.35em; }
+  .print-only { display: none; }
+  #resume-detail .detail-icon-close,
+  #resume-detail[aria-pressed='true'] .detail-icon-open { display: none; }
+  #resume-detail[aria-pressed='true'] .detail-icon-close { display: block; }
+
   @media (max-width: 700px) {
     .resume { padding: 32px 20px 64px; }
     header { grid-template-columns: 1fr; }
@@ -257,7 +309,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   @media print {
     :global(html) { color-scheme: light; }
     :global(body) { background: #fff !important; }
-    :global(#theme-toggle), #resume-pdf { display: none !important; }
+    :global(#theme-toggle), #resume-pdf, #resume-detail, .detail { display: none !important; }
+    .print-only { display: list-item; }
     .resume {
       --body: 8.9pt;
       --name: 25pt;
