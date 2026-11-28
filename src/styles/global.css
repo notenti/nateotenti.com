@@ -124,7 +124,7 @@ button:hover .ink-link {
 
 /* The fixed corner icons sit on a paper disc, so scrolling text and photos
    don't run through them. */
-:is(#theme-toggle, #resume-pdf, #resume-detail, .blob-dismiss):not(:hover) {
+:is(#theme-toggle, #resume-pdf, .blob-dismiss):not(:hover) {
   background-color: rgb(var(--paper) / 0.85);
 }
 

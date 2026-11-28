@@ -2,9 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 // The one-page resume. This page is the source of truth: after editing it, run
-// `npm run resume:pdf` to regenerate public/resume.pdf from it. The .detail
-// blocks are the long version: hidden until the corner toggle opens them, and
-// never printed.
+// `npm run resume:pdf` to regenerate public/resume.pdf from it.
 const thesis =
   'Senior software engineer who builds developer platforms: the agents, test infrastructure, and APIs that whole engineering orgs work through. Most recently, a founding engineer of NVIDIA’s AI software factory and lead engineer for Square’s hardware test platform.';
 ---
@@ -13,24 +11,7 @@ const thesis =
   title="Nate Otenti · Resume"
   description={thesis}
 >
-  <!-- The corner buttons, in the theme toggle's style: detail, then PDF, then theme. -->
-  <button
-    id="resume-detail"
-    type="button"
-    class="fixed bottom-4 right-20 z-40 p-2 rounded-full text-black press"
-    aria-pressed="false"
-    aria-label="Show the detailed resume"
-    title="Show the detailed resume"
-  >
-    <!-- Unfold: shown while collapsed -->
-    <svg class="detail-icon-open w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
-    </svg>
-    <!-- Fold: shown while expanded -->
-    <svg class="detail-icon-close w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M7 20l5-5 5 5M7 4l5 5 5-5" />
-    </svg>
-  </button>
+  <!-- Sits just left of the theme toggle, in its style. -->
   <a
     id="resume-pdf"
     href="/resume.pdf"
@@ -45,7 +26,7 @@ const thesis =
     </svg>
   </a>
 
-  <article class="resume" id="resume">
+  <article class="resume">
 
     <header>
       <div>
@@ -76,13 +57,6 @@ const thesis =
               <li>Designed and own the evals: real bugs replayed against a depot and tools rolled back to the day each was filed, with the agent’s fix judged against the one a human shipped on quality, cost, and runtime.</li>
               <li>Built on-demand Kubernetes workspaces with ZFS snapshots for the agents, and MCP integrations into Confluence, ticketing, and other internal systems. Share on-call.</li>
             </ul>
-            <div class="detail">
-              <p><span class="label">How it works</span> Engineers file bugs the way they always have. The agents pick up incoming tickets, research them against a Markdown knowledge base and live access to internal systems, and propose a changelist. Each agent works in its own Kubernetes workspace, cloned from a ZFS snapshot.</p>
-              <p><span class="label">Evals</span> The hard question with agents is whether they’re actually any good. We answer it with history. Take a bug a human already fixed, rewind the Perforce depot to the moment it was filed, and date-lock every tool the agent can reach so it can’t see the answer. Then let the agent solve it, and judge its changelist against the human one on quality, cost, and runtime. This runs every day.</p>
-              <p><span class="label">What they taught us</span> Context mattered more than the model. The biggest gains came from what the agents could read and reach: the knowledge base and system access. The same daily runs guide our cost and runtime tradeoffs, and catch changes that quietly make the agents worse.</p>
-              <p><span class="label">My part</span> Founding engineer. I designed the overall architecture and the eval system, and work across the stack in Python and TypeScript, including CI/CD, Slack integration, and Prometheus/Grafana observability.</p>
-              <p><span class="label">Reach</span> Other orgs at NVIDIA are adopting the platform, and leadership points to it as a model for building with AI. The 800 hours is an estimate: tickets the agents handle, times the typical time each takes an engineer by hand.</p>
-            </div>
           </div>
         </div>
 
@@ -96,13 +70,6 @@ const thesis =
               <li>Built the Python CLI engineers use to configure, debug, and collect metrics from test hardware, so devices can be recovered remotely.</li>
               <li>Designed the Android Trade Federation platform behind large-scale automated mobile testing, and set its roadmap.</li>
             </ul>
-            <div class="detail">
-              <p><span class="label">The platform</span> More than 20 Square hardware products are tested through it, thousands of times a day. I inherited its API, extended it as more products came on, and kept it one documented interface.</p>
-              <p><span class="label">Direction</span> Set the technical direction for three things the hardware org builds on: the test API, its Python tooling standard, and the Android Trade Federation platform.</p>
-              <p><span class="label">Tooling</span> The 65 machine hours a day came from faster tooling: modern Python packaging and environments across the org’s test code. The CLI lets engineers configure, debug, and recover test devices without being in the room with them.</p>
-              <p><span class="label">AI</span> Championed LLM workflows for test-failure triage and device recovery in the hardware org, through conversations and examples rather than a shipped system.</p>
-              <p><span class="label">Stack</span> Python, Kotlin, Android.</p>
-            </div>
           </div>
         </div>
 
@@ -164,22 +131,6 @@ const thesis =
     </section>
   </article>
 </BaseLayout>
-
-<script>
-  // The detail toggle. #detail in the URL opens it, so the long version can be linked.
-  const btn = document.getElementById('resume-detail') as HTMLButtonElement;
-  const resume = document.getElementById('resume')!;
-  const set = (open: boolean) => {
-    resume.classList.toggle('detailed', open);
-    btn.setAttribute('aria-pressed', String(open));
-    const label = open ? 'Show the short resume' : 'Show the detailed resume';
-    btn.setAttribute('aria-label', label);
-    btn.title = label;
-    history.replaceState(null, '', open ? '#detail' : location.pathname + location.search);
-  };
-  if (location.hash === '#detail') set(true);
-  btn.addEventListener('click', () => set(!resume.classList.contains('detailed')));
-</script>
 
 <style>
   /* One Letter page. A narrow left rail carries when/where; the wide column
@@ -291,15 +242,7 @@ const thesis =
   .pairs dt { color: var(--muted); }
   .pairs dd { margin: 0; }
 
-  /* The detailed view: the long version of each job, opened by the corner toggle. */
-  .detail { display: none; margin-top: calc(0.08in * var(--k)); }
-  .resume.detailed .detail { display: grid; gap: calc(0.06in * var(--k)); }
-  .detail p { margin: 0; text-wrap: pretty; }
-  .detail .label { color: var(--muted); margin-right: 0.35em; }
   .print-only { display: none; }
-  #resume-detail .detail-icon-close,
-  #resume-detail[aria-pressed='true'] .detail-icon-open { display: none; }
-  #resume-detail[aria-pressed='true'] .detail-icon-close { display: block; }
 
   @media (max-width: 700px) {
     .resume { padding: 32px 20px 64px; }
@@ -316,7 +259,7 @@ const thesis =
   @media print {
     :global(html) { color-scheme: light; }
     :global(body) { background: #fff !important; }
-    :global(#theme-toggle), #resume-pdf, #resume-detail, .detail { display: none !important; }
+    :global(#theme-toggle), #resume-pdf { display: none !important; }
     .print-only { display: list-item; }
     .resume {
       --body: 8.9pt;
